@@ -947,27 +947,53 @@ function getFieldValue(input) {
 async function captureFormAsPDF(formEl, formTitle, formName) {
   var formBody = formEl.querySelector('.form-body') || formEl;
 
-  // Hide UI-only elements during screenshot
+  // ── 1. Hide UI-only elements ─────────────────────────────────────────────
   var hideEls = formEl.querySelectorAll('.btn-submit-row, .netlify-success, .sig-clear');
   hideEls.forEach(function(el) { el.dataset.oh = el.style.display; el.style.display = 'none'; });
   formEl.querySelectorAll('.sig-canvas').forEach(function(c) { c.dataset.ov = c.style.display; c.style.display = 'none'; });
   formEl.querySelectorAll('.sig-data-img').forEach(function(img) { img.dataset.ov = img.style.display; img.style.display = 'block'; });
 
-  // ── Measure section break points BEFORE screenshotting ─────────────────
-  // Collect the bottom edge (in CSS px, relative to formBody top) of every
-  // direct child block so we know where it's safe to break pages.
+  // ── 2. Suppress placeholder text ─────────────────────────────────────────
+  // html2canvas renders placeholder text as real content. Temporarily inject
+  // a style that makes placeholders invisible so only real values show.
+  var phStyle = document.createElement('style');
+  phStyle.id  = 'wcc-ph-hide';
+  phStyle.textContent = [
+    'input::placeholder, textarea::placeholder { color: transparent !important; }',
+    'input::-webkit-input-placeholder, textarea::-webkit-input-placeholder { color: transparent !important; }',
+    'input::-moz-placeholder, textarea::-moz-placeholder { color: transparent !important; }',
+    // Also hide select "-- Select --" default option visually (can't easily hide, but grey it)
+    'select { color: #1a3a2a !important; }'
+  ].join(' ');
+  document.head.appendChild(phStyle);
+
+  // Blank out select fields that are still on the default "-- Select --" option
+  var selects = Array.from(formEl.querySelectorAll('select'));
+  selects.forEach(function(sel) {
+    sel.dataset.ov2 = sel.value;
+    if (!sel.value || sel.options[sel.selectedIndex].value === '') {
+      // Create a blank placeholder option temporarily
+      sel.dataset.phblank = '1';
+      sel.style.color = 'transparent';
+    }
+  });
+
+  // ── 3. Measure section break points BEFORE screenshotting ───────────────
+  // Use all block-level children for break detection.
+  // Add a small bottom padding buffer so the last item on each page isn't clipped.
+  var BREAK_BUFFER = 12; // extra px to add to each section bottom
   var bodyTop = formBody.getBoundingClientRect().top + window.scrollY;
-  var sectionBreaks = [0]; // always start with 0
+  var sectionBreaks = [0];
   Array.from(formBody.children).forEach(function(child) {
     var r = child.getBoundingClientRect();
-    var bottom = (r.top + window.scrollY - bodyTop) + r.height;
+    var bottom = (r.top + window.scrollY - bodyTop) + r.height + BREAK_BUFFER;
     sectionBreaks.push(Math.round(bottom));
   });
   var totalCssPx = formBody.scrollHeight;
-  if (sectionBreaks[sectionBreaks.length - 1] < totalCssPx) {
-    sectionBreaks.push(totalCssPx);
-  }
+  // Make sure the last break equals the actual scrollHeight (no buffer for last)
+  sectionBreaks[sectionBreaks.length - 1] = totalCssPx;
 
+  // ── 4. Take the screenshot ───────────────────────────────────────────────
   var canvas;
   try {
     canvas = await html2canvas(formBody, {
@@ -981,71 +1007,65 @@ async function captureFormAsPDF(formEl, formTitle, formName) {
       allowTaint: true
     });
   } finally {
+    // Restore everything
     hideEls.forEach(function(el) { el.style.display = el.dataset.oh || ''; });
     formEl.querySelectorAll('.sig-canvas').forEach(function(c) { c.style.display = c.dataset.ov || ''; });
     formEl.querySelectorAll('.sig-data-img').forEach(function(img) { img.style.display = img.dataset.ov || ''; });
+    if (phStyle.parentNode) phStyle.parentNode.removeChild(phStyle);
+    selects.forEach(function(sel) {
+      sel.style.color = '';
+      delete sel.dataset.phblank;
+    });
   }
   if (!canvas) return null;
 
+  // ── 5. Build PDF pages ───────────────────────────────────────────────────
   var jsPDFLib = window.jspdf ? window.jspdf.jsPDF : window.jsPDF;
   if (!jsPDFLib) { console.error('jsPDF not loaded'); return null; }
 
   var pdf     = new jsPDFLib({ orientation: 'portrait', unit: 'pt', format: 'a4' });
   var pdfW    = pdf.internal.pageSize.getWidth();   // 595.28 pt
   var pdfH    = pdf.internal.pageSize.getHeight();  // 841.89 pt
-  var margin  = 28;                                 // pt
-  var printW  = pdfW - 2 * margin;                  // usable width
-  var printH  = pdfH - 2 * margin;                  // usable height per page
+  var margin  = 28;
+  var printW  = pdfW - 2 * margin;
+  var printH  = pdfH - 2 * margin;
 
-  // How many CSS px fit on one printable page?
-  var cssPxPerPt   = formBody.scrollWidth / printW;   // CSS px per pt
-  var pageHCssPx   = printH * cssPxPerPt;              // CSS px per page
-  // Canvas pixels per CSS px (our html2canvas scale)
-  var canvasScale  = canvas.width / formBody.scrollWidth; // should be ~2
+  var cssPxPerPt  = formBody.scrollWidth / printW;
+  var pageHCssPx  = printH * cssPxPerPt;
+  var canvasScale = canvas.width / formBody.scrollWidth;
 
-  // ── Build page slices using section break points ────────────────────────
-  // Pack as many sections onto a page as will fit without exceeding pageHCssPx,
-  // then start a new page. A single section that is taller than a full page
-  // gets its own page (no way around that without splitting it).
-  var pages = []; // each entry: { startCssPx, endCssPx }
+  // Pack sections onto pages, breaking BETWEEN sections only
+  var pages = [];
   var pageStart = 0;
-
   for (var i = 1; i < sectionBreaks.length; i++) {
     var sectionEnd = sectionBreaks[i];
     var pageUsed   = sectionEnd - pageStart;
-
     if (pageUsed > pageHCssPx && pageStart < sectionBreaks[i - 1]) {
-      // This section would overflow — end the current page just before it
       pages.push({ start: pageStart, end: sectionBreaks[i - 1] });
       pageStart = sectionBreaks[i - 1];
     }
   }
-  // Final page
   pages.push({ start: pageStart, end: totalCssPx });
 
-  // ── Render each page slice ──────────────────────────────────────────────
+  // Render each page as a cropped canvas slice
   pages.forEach(function(pg, idx) {
     if (idx > 0) pdf.addPage();
 
-    var srcYpx  = Math.round(pg.start * canvasScale);
-    var srcHpx  = Math.round((pg.end - pg.start) * canvasScale);
-    srcHpx      = Math.min(srcHpx, canvas.height - srcYpx); // clamp
-
+    var srcYpx = Math.round(pg.start * canvasScale);
+    var srcHpx = Math.round((pg.end - pg.start) * canvasScale);
+    srcHpx     = Math.min(srcHpx, canvas.height - srcYpx);
     if (srcHpx <= 0) return;
 
     var slice    = document.createElement('canvas');
     slice.width  = canvas.width;
     slice.height = srcHpx;
     slice.getContext('2d').drawImage(
-      canvas,
-      0, srcYpx, canvas.width, srcHpx,
-      0, 0,      canvas.width, srcHpx
+      canvas, 0, srcYpx, canvas.width, srcHpx,
+               0, 0,      canvas.width, srcHpx
     );
 
-    var imgData  = slice.toDataURL('image/jpeg', 0.92);
-    var imgHpt   = srcHpx / canvasScale / cssPxPerPt; // rendered height in pt
-    imgHpt       = Math.min(imgHpt, printH);            // never overflow page
-
+    var imgData = slice.toDataURL('image/jpeg', 0.92);
+    var imgHpt  = Math.min(srcHpx / canvasScale / cssPxPerPt, printH);
     pdf.addImage(imgData, 'JPEG', margin, margin, printW, imgHpt);
   });
 
