@@ -1160,18 +1160,41 @@ async function captureFormAsPDF(formEl, formTitle, formName) {
   if (!jsPDFLib) { console.error('jsPDF not loaded'); return null; }
 
   var pdf    = new jsPDFLib({ orientation: 'portrait', unit: 'pt', format: 'a4' });
-  var pdfW   = pdf.internal.pageSize.getWidth();
-  var pdfH   = pdf.internal.pageSize.getHeight();
-  var margin = 24;
-  var imgW   = pdfW - 2 * margin;
-  var imgH   = (canvas.height / canvas.width) * imgW;
-  var pageH  = pdfH - 2 * margin;
-  var pages  = Math.ceil(imgH / pageH);
-  var imgData = canvas.toDataURL('image/jpeg', 0.88);
+  var pdfW   = pdf.internal.pageSize.getWidth();   // 595.28 pt
+  var pdfH   = pdf.internal.pageSize.getHeight();  // 841.89 pt
+  var margin = 28; // pt padding on all sides
+
+  var printW  = pdfW - 2 * margin;   // usable width in pt
+  var printH  = pdfH - 2 * margin;   // usable height per page in pt
+
+  // Scale factor: canvas pixels per pt
+  var scale   = canvas.width / printW;
+  // How many canvas pixels fit in one printable page height
+  var sliceH  = printH * scale;
+  var pages   = Math.ceil(canvas.height / sliceH);
 
   for (var p = 0; p < pages; p++) {
     if (p > 0) pdf.addPage();
-    pdf.addImage(imgData, 'JPEG', margin, margin - (p * pageH), imgW, imgH);
+
+    // Crop the canvas to just this page's slice
+    var srcY    = Math.round(p * sliceH);
+    var srcH    = Math.min(sliceH, canvas.height - srcY);
+
+    var slice   = document.createElement('canvas');
+    slice.width  = canvas.width;
+    slice.height = Math.round(srcH);
+    slice.getContext('2d').drawImage(
+      canvas,
+      0, srcY,            // source x, y
+      canvas.width, srcH, // source w, h
+      0, 0,               // dest x, y
+      canvas.width, srcH  // dest w, h
+    );
+
+    var sliceData  = slice.toDataURL('image/jpeg', 0.90);
+    var sliceImgH  = (srcH / scale); // pt height of this slice
+
+    pdf.addImage(sliceData, 'JPEG', margin, margin, printW, sliceImgH);
   }
   return pdf;
 }
