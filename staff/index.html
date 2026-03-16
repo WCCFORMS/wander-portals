@@ -1134,10 +1134,27 @@ async function captureFormAsPDF(formEl, formTitle, formName) {
   formEl.querySelectorAll('.sig-canvas').forEach(function(c) { c.dataset.ov = c.style.display; c.style.display = 'none'; });
   formEl.querySelectorAll('.sig-data-img').forEach(function(img) { img.dataset.ov = img.style.display; img.style.display = 'block'; });
 
-  // ── 2. Suppress placeholder text ─────────────────────────────────────────
-  var phStyle = document.createElement('style');
-  phStyle.textContent = 'input::placeholder,textarea::placeholder{color:transparent!important}input::-webkit-input-placeholder,textarea::-webkit-input-placeholder{color:transparent!important}input::-moz-placeholder,textarea::-moz-placeholder{color:transparent!important}';
-  document.head.appendChild(phStyle);
+  // ── 2. Suppress placeholder text by blanking placeholder attributes ────────
+  // html2canvas renders its own DOM — CSS pseudo-elements (::placeholder) are
+  // not reliably applied. Instead we blank the placeholder attribute directly
+  // and restore it after screenshotting.
+  var phBackup = [];
+  formEl.querySelectorAll('input, textarea').forEach(function(el) {
+    var ph = el.getAttribute('placeholder');
+    if (ph) {
+      phBackup.push({ el: el, ph: ph });
+      el.setAttribute('placeholder', '\u00A0'); // non-breaking space — renders blank
+    }
+  });
+
+  // Hide unselected dropdowns (showing "-- Select --")
+  var selBackup = [];
+  formEl.querySelectorAll('select').forEach(function(sel) {
+    if (!sel.value || sel.options[sel.selectedIndex].value === '') {
+      selBackup.push({ el: sel, color: sel.style.color });
+      sel.style.color = 'transparent';
+    }
+  });
 
   // ── 3. Screenshot the full form ───────────────────────────────────────────
   var canvas;
@@ -1156,38 +1173,53 @@ async function captureFormAsPDF(formEl, formTitle, formName) {
     hideEls.forEach(function(el) { el.style.display = el.dataset.oh || ''; });
     formEl.querySelectorAll('.sig-canvas').forEach(function(c) { c.style.display = c.dataset.ov || ''; });
     formEl.querySelectorAll('.sig-data-img').forEach(function(img) { img.style.display = img.dataset.ov || ''; });
-    if (phStyle.parentNode) phStyle.parentNode.removeChild(phStyle);
+    // Restore placeholder text
+    phBackup.forEach(function(item) { item.el.setAttribute('placeholder', item.ph); });
+    // Restore select colours
+    selBackup.forEach(function(item) { item.el.style.color = item.color; });
   }
   if (!canvas) return null;
 
-  // ── 4. Multi-page PDF using the proven mm-units approach ──────────────────
-  // Based on the canonical jsPDF community solution: place the full image on
-  // every page with a negative Y offset so each page "windows" into the image.
-  // jsPDF clips to the page boundary automatically. No manual slicing needed.
+  // ── 4. Multi-page PDF — canvas slice approach ────────────────────────────
+  // Each page gets its own CROPPED canvas image. No overlap, no clipping
+  // artifacts — every pixel appears exactly once across all pages.
   var jsPDFLib = window.jspdf ? window.jspdf.jsPDF : window.jsPDF;
   if (!jsPDFLib) { console.error('jsPDF not loaded'); return null; }
 
-  var pdf        = new jsPDFLib('p', 'mm', 'a4');
-  var pageW      = 210;                                    // A4 width  in mm
-  var pageH      = 297;                                    // A4 height in mm
-  var margin     = 8;                                      // mm margins
-  var printW     = pageW - 2 * margin;                     // usable width
-  var printH     = pageH - 2 * margin;                     // usable height per page
-  var imgH       = (canvas.height / canvas.width) * printW; // proportional height in mm
-  var imgData    = canvas.toDataURL('image/jpeg', 0.92);
-  var heightLeft = imgH;
-  var position   = margin;                                 // start Y within first page
+  var pdf      = new jsPDFLib('p', 'mm', 'a4');
+  var margin   = 8;            // mm on all sides
+  var printW   = 210 - 2 * margin;  // 194 mm usable width
+  var printH   = 297 - 2 * margin;  // 281 mm usable height per page
 
-  // First page
-  pdf.addImage(imgData, 'JPEG', margin, position, printW, imgH);
-  heightLeft -= printH;
+  // How many canvas pixels equal 1 mm of print width?
+  var pxPerMm  = canvas.width / printW;
 
-  // Additional pages
-  while (heightLeft > 0) {
-    position = margin - (imgH - heightLeft); // shift image up by amount already printed
-    pdf.addPage();
-    pdf.addImage(imgData, 'JPEG', margin, position, printW, imgH);
-    heightLeft -= printH;
+  // How many canvas pixels tall is one printed page?
+  var pageHpx  = Math.round(printH * pxPerMm);
+
+  var totalPages = Math.ceil(canvas.height / pageHpx);
+
+  for (var p = 0; p < totalPages; p++) {
+    if (p > 0) pdf.addPage();
+
+    var srcY  = p * pageHpx;
+    var srcH  = Math.min(pageHpx, canvas.height - srcY);  // last page may be shorter
+    if (srcH <= 0) break;
+
+    // Crop exactly this page's pixels from the full canvas
+    var slice    = document.createElement('canvas');
+    slice.width  = canvas.width;
+    slice.height = srcH;
+    slice.getContext('2d').drawImage(
+      canvas,
+      0, srcY, canvas.width, srcH,   // source rectangle
+      0, 0,    canvas.width, srcH    // destination rectangle
+    );
+
+    var sliceData = slice.toDataURL('image/jpeg', 0.93);
+    var sliceHmm  = srcH / pxPerMm;   // height in mm (proportional, <= printH)
+
+    pdf.addImage(sliceData, 'JPEG', margin, margin, printW, sliceHmm);
   }
 
   return pdf;
