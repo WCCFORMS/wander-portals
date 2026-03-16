@@ -157,6 +157,16 @@ body{font-family:'Source Sans 3',sans-serif;background:var(--green-ultra-pale);c
   .sig-canvas { display:none !important; }
   .sig-clear { display:none !important; }
 }
+
+.sched-time { display:flex; gap:3px; align-items:center; font-size:0.75rem; margin-top:4px; }
+.sched-time input { width:46px; font-size:0.75rem; padding:2px 4px; border:1px solid #ccc; border-radius:3px; text-align:center; }
+.schedule-tbl td { padding:6px 8px; border-bottom:1px solid #eee; vertical-align:middle; }
+.schedule-tbl input[type=checkbox] { width:16px; height:16px; cursor:pointer; }
+.cost-input { width:64px; font-size:0.82rem; padding:3px 6px; border:1px solid #ccc; border-radius:3px; text-align:right; }
+.cost-rate-input { width:56px; font-size:0.82rem; padding:3px 6px; border:1px solid #ccc; border-radius:3px; text-align:right; }
+.cost-calc { font-size:0.82rem; color:#1a3a2a; font-weight:600; }
+.policy-time-input { width:60px; font-size:0.85rem; padding:2px 6px; border:1px solid #ccc; border-radius:3px; }
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
@@ -677,9 +687,9 @@ body{font-family:'Source Sans 3',sans-serif;background:var(--green-ultra-pale);c
 <table class="schedule-tbl">
 <thead><tr><th style="width:110px">Shift</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th><th>Sun</th></tr></thead>
 <tbody>
-<tr><td class="rl">Day Shift<br/><small>___to___</small></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-<tr><td class="rl">Evening Active<br/><small>___to___</small></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-<tr><td class="rl">Sleepover<br/><small>___to___</small></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr><td class="rl">Day Shift<div class="sched-time"><input name="roster_day_start" placeholder="e.g. 6am" type="text"/><span>to</span><input name="roster_day_end" placeholder="e.g. 10pm" type="text"/></div></td><td style="text-align:center"><input name="roster_day_mon" type="checkbox"/></td><td style="text-align:center"><input name="roster_day_tue" type="checkbox"/></td><td style="text-align:center"><input name="roster_day_wed" type="checkbox"/></td><td style="text-align:center"><input name="roster_day_thu" type="checkbox"/></td><td style="text-align:center"><input name="roster_day_fri" type="checkbox"/></td><td style="text-align:center"><input name="roster_day_sat" type="checkbox"/></td><td style="text-align:center"><input name="roster_day_sun" type="checkbox"/></td></tr>
+<tr><td class="rl">Evening Active<div class="sched-time"><input name="roster_eve_start" placeholder="e.g. 6am" type="text"/><span>to</span><input name="roster_eve_end" placeholder="e.g. 10pm" type="text"/></div></td><td style="text-align:center"><input name="roster_eve_mon" type="checkbox"/></td><td style="text-align:center"><input name="roster_eve_tue" type="checkbox"/></td><td style="text-align:center"><input name="roster_eve_wed" type="checkbox"/></td><td style="text-align:center"><input name="roster_eve_thu" type="checkbox"/></td><td style="text-align:center"><input name="roster_eve_fri" type="checkbox"/></td><td style="text-align:center"><input name="roster_eve_sat" type="checkbox"/></td><td style="text-align:center"><input name="roster_eve_sun" type="checkbox"/></td></tr>
+<tr><td class="rl">Sleepover<div class="sched-time"><input name="roster_sleep_start" placeholder="e.g. 6am" type="text"/><span>to</span><input name="roster_sleep_end" placeholder="e.g. 10pm" type="text"/></div></td><td style="text-align:center"><input name="roster_sleep_mon" type="checkbox"/></td><td style="text-align:center"><input name="roster_sleep_tue" type="checkbox"/></td><td style="text-align:center"><input name="roster_sleep_wed" type="checkbox"/></td><td style="text-align:center"><input name="roster_sleep_thu" type="checkbox"/></td><td style="text-align:center"><input name="roster_sleep_fri" type="checkbox"/></td><td style="text-align:center"><input name="roster_sleep_sat" type="checkbox"/></td><td style="text-align:center"><input name="roster_sleep_sun" type="checkbox"/></td></tr>
 </tbody></table>
 <div class="section-heading">Sleepover Pricing &amp; Rules</div>
 <div class="callout-red"><strong>CRITICAL — 8-Hour Sleepover Rule:</strong> The passive/sleeping period must be a continuous period of at least 8 hours, start before midnight, and finish after midnight. If under 8 hours, the sleepover flat rate ($297.60) cannot be used — all hours must be billed at active hourly rates, costing the participant significantly more.</div>
@@ -702,7 +712,7 @@ body{font-family:'Source Sans 3',sans-serif;background:var(--green-ultra-pale);c
 <div class="policy-box"><h4>Requirements:</h4>
 <ul>
 <li>Worker will be provided with suitable sleeping area (bed, linen, bathroom access)</li>
-<li>Active support will be structured to end by <strong>____PM</strong> to ensure the 8-hour minimum</li>
+<li>Active support will be structured to end by <input class="policy-time-input" name="active_support_end_time" placeholder="e.g. 11PM" type="text"/> PM to ensure the 8-hour minimum</li>
 <li>Worker will be available if needed during the sleepover period</li>
 <li>Any active support during the sleepover will be recorded with exact start/end times</li>
 </ul></div>
@@ -710,13 +720,13 @@ body{font-family:'Source Sans 3',sans-serif;background:var(--green-ultra-pale);c
 <table class="pricing-tbl">
 <thead><tr><th>Support Type</th><th>Est. Hours/Units</th><th>Rate</th><th>Est. Weekly</th></tr></thead>
 <tbody>
-<tr><td>Weekday evening active</td><td>____hrs</td><td>$77.38/hr</td><td>$________</td></tr>
-<tr><td>Night-time sleepover</td><td>____nights</td><td>$297.60/night</td><td>$________</td></tr>
-<tr><td>Saturday support</td><td>____hrs</td><td>$98.83/hr</td><td>$________</td></tr>
-<tr><td>Sunday support</td><td>____hrs</td><td>$127.43/hr</td><td>$________</td></tr>
-<tr><td>Provider travel (labour)</td><td>____hrs</td><td>$_____/hr</td><td>$________</td></tr>
-<tr><td>Provider travel (km)</td><td>____km</td><td>$0.99/km</td><td>$________</td></tr>
-<tr style="background:var(--green-pale);font-weight:700"><td colspan="3"><strong>ESTIMATED TOTAL PER WEEK</strong></td><td><strong>$________</strong></td></tr>
+<tr><td>Weekday evening active</td><td><input class="cost-input" name="cost_eve_active_units" oninput="calcRow(this)" placeholder="0" type="number" min="0" step="0.5"/> hrs</td><td>$77.38/hr</td><td><span class="cost-calc" id="calc_eve_active">$0.00</span><input name="cost_eve_active_weekly" type="hidden" id="calc_eve_active_val"/></td></tr>
+<tr><td>Night-time sleepover</td><td><input class="cost-input" name="cost_sleepover_units" oninput="calcRow(this)" placeholder="0" type="number" min="0" step="0.5"/> nights</td><td>$297.60/night</td><td><span class="cost-calc" id="calc_sleepover">$0.00</span><input name="cost_sleepover_weekly" type="hidden" id="calc_sleepover_val"/></td></tr>
+<tr><td>Saturday support</td><td><input class="cost-input" name="cost_sat_units" oninput="calcRow(this)" placeholder="0" type="number" min="0" step="0.5"/> hrs</td><td>$98.83/hr</td><td><span class="cost-calc" id="calc_sat">$0.00</span><input name="cost_sat_weekly" type="hidden" id="calc_sat_val"/></td></tr>
+<tr><td>Sunday support</td><td><input class="cost-input" name="cost_sun_units" oninput="calcRow(this)" placeholder="0" type="number" min="0" step="0.5"/> hrs</td><td>$127.43/hr</td><td><span class="cost-calc" id="calc_sun">$0.00</span><input name="cost_sun_weekly" type="hidden" id="calc_sun_val"/></td></tr>
+<tr><td>Provider travel (labour)</td><td><input class="cost-input" name="cost_travel_hr_units" oninput="calcRow(this)" placeholder="0" type="number" min="0" step="0.5"/> hrs</td><td><input class="cost-rate-input" name="cost_travel_hr_rate" oninput="calcRow(this)" placeholder="0.00" type="number" min="0" step="0.01"/>/hr</td><td><span class="cost-calc" id="calc_travel_hr">$0.00</span><input name="cost_travel_hr_weekly" type="hidden" id="calc_travel_hr_val"/></td></tr>
+<tr><td>Provider travel (km)</td><td><input class="cost-input" name="cost_travel_km_units" oninput="calcRow(this)" placeholder="0" type="number" min="0" step="0.5"/> km</td><td>$0.99/km</td><td><span class="cost-calc" id="calc_travel_km">$0.00</span><input name="cost_travel_km_weekly" type="hidden" id="calc_travel_km_val"/></td></tr>
+<tr style="background:var(--green-pale);font-weight:700"><td colspan="3"><strong>ESTIMATED TOTAL PER WEEK</strong></td><td><strong><span id="calc_total">$0.00</span></strong><input name="cost_total_weekly" type="hidden" id="calc_total_val"/></td></tr>
 </tbody></table>
 <div class="section-heading">Signatures</div>
 <div class="confirm-checks">
@@ -1214,5 +1224,49 @@ function handleSubmit(event, formName) {
 }
 
 </script>
+
+<script>
+// Overnight cost auto-calculator
+var _overnightRates = {
+  'cost_eve_active_units':  77.38,
+  'cost_sleepover_units':  297.60,
+  'cost_sat_units':         98.83,
+  'cost_sun_units':        127.43,
+  'cost_travel_km_units':    0.99,
+};
+
+function calcRow(el) {
+  var name = el.name;
+  var prefix = name.replace('_units','').replace('_rate','');
+  var unitsEl = document.querySelector('[name="' + prefix + '_units"]');
+  var rateEl  = document.querySelector('[name="' + prefix + '_rate"]');
+  var calcEl  = document.getElementById('calc_' + prefix.replace('cost_',''));
+  var calcValEl = document.getElementById('calc_' + prefix.replace('cost_','') + '_val');
+
+  if (!unitsEl || !calcEl) return;
+
+  var units = parseFloat(unitsEl.value) || 0;
+  var rate  = rateEl ? (parseFloat(rateEl.value) || 0) : (_overnightRates[unitsEl.name] || 0);
+  var total = units * rate;
+
+  calcEl.textContent = '$' + total.toFixed(2);
+  if (calcValEl) calcValEl.value = total.toFixed(2);
+  calcGrandTotal();
+}
+
+function calcGrandTotal() {
+  var prefixes = ['eve_active','sleepover','sat','sun','travel_hr','travel_km'];
+  var grand = 0;
+  prefixes.forEach(function(p) {
+    var el = document.getElementById('calc_' + p);
+    if (el) grand += parseFloat(el.textContent.replace('$','')) || 0;
+  });
+  var tot = document.getElementById('calc_total');
+  var totVal = document.getElementById('calc_total_val');
+  if (tot) tot.textContent = '$' + grand.toFixed(2);
+  if (totVal) totVal.value = grand.toFixed(2);
+}
+</script>
+
 </body>
 </html>
