@@ -161,6 +161,19 @@
 }
 .sig-data-img { display:none; max-width:480px; height:140px;
   border:1px solid #ccc; border-radius:6px; }
+
+.sig-grid-inputs { display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-top:16px; }
+.sig-party { background:#f8fcfa; border:1px solid #d0e8d8; border-radius:8px; padding:16px; }
+.sig-party-title { font-size:0.82rem; font-weight:700; color:#1a3a2a; margin-bottom:12px; }
+.sig-party .field-group { margin-bottom:10px; }
+.sig-party .field-group:last-child { margin-bottom:0; }
+@media(max-width:600px){ .sig-grid-inputs{ grid-template-columns:1fr; } }
+@media print {
+  .sig-party { background:white !important; }
+  .sig-data-img { display:block !important; }
+  .sig-canvas { display:none !important; }
+  .sig-clear { display:none !important; }
+}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
@@ -297,20 +310,35 @@
 <label class="confirm-check-item"><input name="i_consent_to_wander_community_care_verifying_the_i" type="checkbox"/> I consent to Wander Community Care verifying the information provided</label>
 <label class="confirm-check-item"><input name="i_understand_that_employment_is_subject_to_satisfa" type="checkbox"/> I understand that employment is subject to satisfactory background checks including NDIS Worker Screening</label>
 </div>
-<div class="sig-grid">
-<div class="sig-block">
-<label>Applicant Name</label>
-<input name="applicant_name" placeholder="Full name" type="text"/>
-<div class="sig-line"></div>
-<div style="margin-top:28px"><input name="date" type="date"/></div>
+<div class="sig-grid-inputs"><div class="sig-party"><div class="sig-party-title">Worker</div><div class="field-group">
+<label class="sig-label">Worker Signature</label>
+<div class="sig-wrap">
+<canvas class="sig-canvas" id="sig-emp_worker"></canvas>
+<button class="sig-clear" onclick="clearSig('emp_worker')" type="button">Clear</button>
 </div>
-<div class="sig-block">
-<label>Received By (Office Use)</label>
-<input name="received_by_office_use" placeholder="Full name" type="text"/>
-<div class="sig-line"></div>
-<div style="margin-top:28px"><input name="date_2" type="date"/></div>
+<img alt="Signature" class="sig-data-img" id="sig-img-emp_worker" src=""/>
+<input id="sig-data-emp_worker" name="signature_emp_worker" type="hidden"/>
+</div><div class="field-group">
+<label>Print Name</label>
+<input name="print_name_emp_worker" placeholder="Full name" type="text"/>
+</div><div class="field-group">
+<label>Date</label>
+<input name="date_emp_worker" type="date"/>
+</div></div><div class="sig-party"><div class="sig-party-title">Employer</div><div class="field-group">
+<label class="sig-label">Employer Signature</label>
+<div class="sig-wrap">
+<canvas class="sig-canvas" id="sig-emp_employer"></canvas>
+<button class="sig-clear" onclick="clearSig('emp_employer')" type="button">Clear</button>
 </div>
-</div>
+<img alt="Signature" class="sig-data-img" id="sig-img-emp_employer" src=""/>
+<input id="sig-data-emp_employer" name="signature_emp_employer" type="hidden"/>
+</div><div class="field-group">
+<label>Print Name</label>
+<input name="print_name_emp_employer" placeholder="Full name" readonly="" style="background:#f0f7f4;color:#555" type="text"/>
+</div><div class="field-group">
+<label>Date</label>
+<input name="date_emp_employer" readonly="" style="background:#f0f7f4;color:#555" type="date"/>
+</div></div></div>
 </div>
 <div class="btn-submit-row" style="margin-top:24px;padding:16px 20px;background:var(--green-pale,#f0f7f4);border-radius:8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;"><p style="font-size:0.82rem;color:#555;margin:0;max-width:400px;">Fill in all fields, sign below, then click <strong>Submit Form</strong>. You can save a PDF copy after submitting.</p><button class="btn-submit btn-save" onclick="return handleSubmit(event, 'wcc-staff-personal-info')" style="background:var(--green-dark,#1a3a2a);color:#fff;border:none;padding:12px 28px;border-radius:6px;font-size:0.88rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;" type="button"><svg style="width:16px;height:16px;fill:white" viewbox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg>Submit Form</button></div><div class="netlify-success" id="success-wcc-staff-personal-info" style="display:none;background:#d4edda;border:1px solid #c3e6cb;color:#155724;border-radius:8px;padding:16px 20px;margin-top:12px;font-weight:600;">✅ Submitted! Data sent to Wander Community Care. Click <strong>Save Signed PDF</strong> above to save your copy.</div>
 </div>
@@ -435,29 +463,37 @@
 <label class="confirm-check-item"><input name="employment_is_subject_to_satisfactory_completion_o" type="checkbox"/> Employment is subject to satisfactory completion of all background checks, NDIS Worker Screening, and the NDIS Worker Orientation Module</label>
 <label class="confirm-check-item"><input name="i_will_immediately_notify_wander_community_care_if" type="checkbox"/> I will immediately notify Wander Community Care if my NDIS Worker Screening status changes</label>
 </div>
-<div class="sig-grid">
-<div class="sig-block">
-<label>Employee Name</label>
-<input name="employee_name_2" placeholder="Full name" type="text"/>
-<div class="sig-line"></div>
-<div style="margin-top:28px"><input name="date" type="date"/></div>
-</div>
-<div class="sig-block">
-<label>Employer — Authorised Signatory</label>
-<input name="employer_authorised_signatory" placeholder="Name" type="text"/>
-<div class="sig-line"></div>
-<div style="margin-top:28px"><input name="date_2" type="date"/></div>
-</div>
-</div>
-</div>
-<div class="sig-block" id="sig-block-employment_signature">
+<div class="sig-grid-inputs"><div class="sig-party"><div class="sig-party-title">Worker</div><div class="field-group">
 <label class="sig-label">Worker Signature</label>
 <div class="sig-wrap">
-<canvas class="sig-canvas" id="sig-employment_signature"></canvas>
-<button class="sig-clear" onclick="clearSig('employment_signature')" type="button">Clear</button>
-</div><img alt="Signature" class="sig-data-img" id="sig-img-employment_signature" src=""/>
-<input id="sig-data-employment_signature" name="signature_employment_signature" type="hidden"/>
+<canvas class="sig-canvas" id="sig-conduct_worker"></canvas>
+<button class="sig-clear" onclick="clearSig('conduct_worker')" type="button">Clear</button>
 </div>
+<img alt="Signature" class="sig-data-img" id="sig-img-conduct_worker" src=""/>
+<input id="sig-data-conduct_worker" name="signature_conduct_worker" type="hidden"/>
+</div><div class="field-group">
+<label>Print Name</label>
+<input name="print_name_conduct_worker" placeholder="Full name" type="text"/>
+</div><div class="field-group">
+<label>Date</label>
+<input name="date_conduct_worker" type="date"/>
+</div></div><div class="sig-party"><div class="sig-party-title">Management</div><div class="field-group">
+<label class="sig-label">Management Signature</label>
+<div class="sig-wrap">
+<canvas class="sig-canvas" id="sig-conduct_mgmt"></canvas>
+<button class="sig-clear" onclick="clearSig('conduct_mgmt')" type="button">Clear</button>
+</div>
+<img alt="Signature" class="sig-data-img" id="sig-img-conduct_mgmt" src=""/>
+<input id="sig-data-conduct_mgmt" name="signature_conduct_mgmt" type="hidden"/>
+</div><div class="field-group">
+<label>Print Name</label>
+<input name="print_name_conduct_mgmt" placeholder="Full name" readonly="" style="background:#f0f7f4;color:#555" type="text"/>
+</div><div class="field-group">
+<label>Date</label>
+<input name="date_conduct_mgmt" readonly="" style="background:#f0f7f4;color:#555" type="date"/>
+</div></div></div>
+</div>
+
 <div class="btn-submit-row" style="margin-top:24px;padding:16px 20px;background:var(--green-pale,#f0f7f4);border-radius:8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;"><p style="font-size:0.82rem;color:#555;margin:0;max-width:400px;">Fill in all fields, sign below, then click <strong>Submit Form</strong>. You can save a PDF copy after submitting.</p><button class="btn-submit btn-save" onclick="return handleSubmit(event, 'wcc-staff-employment-agreement')" style="background:var(--green-dark,#1a3a2a);color:#fff;border:none;padding:12px 28px;border-radius:6px;font-size:0.88rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;" type="button"><svg style="width:16px;height:16px;fill:white" viewbox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg>Submit Form</button></div><div class="netlify-success" id="success-wcc-staff-employment-agreement" style="display:none;background:#d4edda;border:1px solid #c3e6cb;color:#155724;border-radius:8px;padding:16px 20px;margin-top:12px;font-weight:600;">✅ Submitted! Data sent to Wander Community Care. Click <strong>Save Signed PDF</strong> above to save your copy.</div>
 </div>
 </div>
@@ -491,10 +527,10 @@
 <li>Take all reasonable steps to prevent and respond to violence, exploitation, neglect, and abuse</li>
 <li>Not engage in sexual misconduct with people with disability</li>
 </ul>
-<label class="confirm-check-item" style="margin-top:14px"><input name="i_acknowledge_and_agree_to_comply_with_the_ndis_co" type="checkbox"> I acknowledge and agree to comply with the NDIS Code of Conduct at all times</input></label>
+<label class="confirm-check-item" style="margin-top:14px"><input name="i_acknowledge_and_agree_to_comply_with_the_ndis_co" type="checkbox"/> I acknowledge and agree to comply with the NDIS Code of Conduct at all times</label>
 <div class="section-heading">Professional Conduct</div>
 <div class="check-grid" style="grid-template-columns:1fr">
-<label class="check-item"><input name="treat_all_participants_families_and_colleagues_wit" type="checkbox"> Treat all participants, families, and colleagues with respect and dignity</input></label>
+<label class="check-item"><input name="treat_all_participants_families_and_colleagues_wit" type="checkbox"/> Treat all participants, families, and colleagues with respect and dignity</label>
 <label class="check-item"><input name="maintain_appropriate_professional_boundaries_no_du" type="checkbox"/> Maintain appropriate professional boundaries — no dual relationships with participants</label>
 <label class="check-item"><input name="not_accept_gifts_money_or_benefits_from_participan" type="checkbox"/> Not accept gifts, money, or benefits from participants or families (token gifts under $20 accepted)</label>
 <label class="check-item"><input name="arrive_on_time_for_all_shifts_and_notify_managemen" type="checkbox"/> Arrive on time for all shifts and notify management immediately if late or absent</label>
@@ -552,29 +588,37 @@
 <label class="confirm-check-item"><input name="i_understand_that_breaches_may_result_in_disciplin" type="checkbox"/> I understand that breaches may result in disciplinary action, termination, and reporting to the NDIS Commission</label>
 <label class="confirm-check-item"><input name="i_understand_these_obligations_continue_even_after" type="checkbox"/> I understand these obligations continue even after my employment ends</label>
 </div>
-<div class="sig-grid">
-<div class="sig-block">
-<label>Staff Member Name</label>
-<input name="staff_member_name" placeholder="Full name" type="text"/>
-<div class="sig-line"></div>
-<div style="margin-top:28px"><input name="date" type="date"/></div>
-</div>
-<div class="sig-block">
-<label>Witness Name</label>
-<input name="witness_name" placeholder="Full name" type="text"/>
-<div class="sig-line"></div>
-<div style="margin-top:28px"><input name="date_2" type="date"/></div>
-</div>
-</div>
-</div>
-<div class="sig-block" id="sig-block-conduct_signature">
+<div class="sig-grid-inputs"><div class="sig-party"><div class="sig-party-title">Worker</div><div class="field-group">
 <label class="sig-label">Worker Signature</label>
 <div class="sig-wrap">
-<canvas class="sig-canvas" id="sig-conduct_signature"></canvas>
-<button class="sig-clear" onclick="clearSig('conduct_signature')" type="button">Clear</button>
-</div><img alt="Signature" class="sig-data-img" id="sig-img-conduct_signature" src=""/>
-<input id="sig-data-conduct_signature" name="signature_conduct_signature" type="hidden"/>
+<canvas class="sig-canvas" id="sig-clear_worker"></canvas>
+<button class="sig-clear" onclick="clearSig('clear_worker')" type="button">Clear</button>
 </div>
+<img alt="Signature" class="sig-data-img" id="sig-img-clear_worker" src=""/>
+<input id="sig-data-clear_worker" name="signature_clear_worker" type="hidden"/>
+</div><div class="field-group">
+<label>Print Name</label>
+<input name="print_name_clear_worker" placeholder="Full name" type="text"/>
+</div><div class="field-group">
+<label>Date</label>
+<input name="date_clear_worker" type="date"/>
+</div></div><div class="sig-party"><div class="sig-party-title">Management</div><div class="field-group">
+<label class="sig-label">Management Signature</label>
+<div class="sig-wrap">
+<canvas class="sig-canvas" id="sig-clear_mgmt"></canvas>
+<button class="sig-clear" onclick="clearSig('clear_mgmt')" type="button">Clear</button>
+</div>
+<img alt="Signature" class="sig-data-img" id="sig-img-clear_mgmt" src=""/>
+<input id="sig-data-clear_mgmt" name="signature_clear_mgmt" type="hidden"/>
+</div><div class="field-group">
+<label>Print Name</label>
+<input name="print_name_clear_mgmt" placeholder="Full name" readonly="" style="background:#f0f7f4;color:#555" type="text"/>
+</div><div class="field-group">
+<label>Date</label>
+<input name="date_clear_mgmt" readonly="" style="background:#f0f7f4;color:#555" type="date"/>
+</div></div></div>
+</div>
+
 <div class="btn-submit-row" style="margin-top:24px;padding:16px 20px;background:var(--green-pale,#f0f7f4);border-radius:8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;"><p style="font-size:0.82rem;color:#555;margin:0;max-width:400px;">Fill in all fields, sign below, then click <strong>Submit Form</strong>. You can save a PDF copy after submitting.</p><button class="btn-submit btn-save" onclick="return handleSubmit(event, 'wcc-staff-conduct-confidentiality')" style="background:var(--green-dark,#1a3a2a);color:#fff;border:none;padding:12px 28px;border-radius:6px;font-size:0.88rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;" type="button"><svg style="width:16px;height:16px;fill:white" viewbox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg>Submit Form</button></div><div class="netlify-success" id="success-wcc-staff-conduct-confidentiality" style="display:none;background:#d4edda;border:1px solid #c3e6cb;color:#155724;border-radius:8px;padding:16px 20px;margin-top:12px;font-weight:600;">✅ Submitted! Data sent to Wander Community Care. Click <strong>Save Signed PDF</strong> above to save your copy.</div>
 </div>
 </div>
@@ -755,29 +799,37 @@
 <label class="confirm-check-item"><input name="i_authorise_wander_community_care_to_verify_the_in" type="checkbox"/> I authorise Wander Community Care to verify the information provided</label>
 <label class="confirm-check-item"><input name="i_will_maintain_current_clearances_and_certificati" type="checkbox"/> I will maintain current clearances and certifications throughout my employment</label>
 </div>
-<div class="sig-grid">
-<div class="sig-block">
-<label>Staff Member</label>
-<input name="staff_member" placeholder="Full name" type="text"/>
-<div class="sig-line"></div>
-<div style="margin-top:28px"><input name="date_11" type="date"/></div>
-</div>
-<div class="sig-block">
-<label>Verified By — Management</label>
-<input name="verified_by_management" placeholder="Name" type="text"/>
-<div class="sig-line"></div>
-<div style="margin-top:28px"><input name="date_12" type="date"/></div>
-</div>
-</div>
-</div>
-<div class="sig-block" id="sig-block-clearances_signature">
+<div class="sig-grid-inputs"><div class="sig-party"><div class="sig-party-title">Worker</div><div class="field-group">
 <label class="sig-label">Worker Signature</label>
 <div class="sig-wrap">
-<canvas class="sig-canvas" id="sig-clearances_signature"></canvas>
-<button class="sig-clear" onclick="clearSig('clearances_signature')" type="button">Clear</button>
-</div><img alt="Signature" class="sig-data-img" id="sig-img-clearances_signature" src=""/>
-<input id="sig-data-clearances_signature" name="signature_clearances_signature" type="hidden"/>
+<canvas class="sig-canvas" id="sig-emerg_worker"></canvas>
+<button class="sig-clear" onclick="clearSig('emerg_worker')" type="button">Clear</button>
 </div>
+<img alt="Signature" class="sig-data-img" id="sig-img-emerg_worker" src=""/>
+<input id="sig-data-emerg_worker" name="signature_emerg_worker" type="hidden"/>
+</div><div class="field-group">
+<label>Print Name</label>
+<input name="print_name_emerg_worker" placeholder="Full name" type="text"/>
+</div><div class="field-group">
+<label>Date</label>
+<input name="date_emerg_worker" type="date"/>
+</div></div><div class="sig-party"><div class="sig-party-title">Management</div><div class="field-group">
+<label class="sig-label">Management Signature</label>
+<div class="sig-wrap">
+<canvas class="sig-canvas" id="sig-emerg_mgmt"></canvas>
+<button class="sig-clear" onclick="clearSig('emerg_mgmt')" type="button">Clear</button>
+</div>
+<img alt="Signature" class="sig-data-img" id="sig-img-emerg_mgmt" src=""/>
+<input id="sig-data-emerg_mgmt" name="signature_emerg_mgmt" type="hidden"/>
+</div><div class="field-group">
+<label>Print Name</label>
+<input name="print_name_emerg_mgmt" placeholder="Full name" readonly="" style="background:#f0f7f4;color:#555" type="text"/>
+</div><div class="field-group">
+<label>Date</label>
+<input name="date_emerg_mgmt" readonly="" style="background:#f0f7f4;color:#555" type="date"/>
+</div></div></div>
+</div>
+
 <div class="btn-submit-row" style="margin-top:24px;padding:16px 20px;background:var(--green-pale,#f0f7f4);border-radius:8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;"><p style="font-size:0.82rem;color:#555;margin:0;max-width:400px;">Fill in all fields, sign below, then click <strong>Submit Form</strong>. You can save a PDF copy after submitting.</p><button class="btn-submit btn-save" onclick="return handleSubmit(event, 'wcc-staff-clearances-qualifications')" style="background:var(--green-dark,#1a3a2a);color:#fff;border:none;padding:12px 28px;border-radius:6px;font-size:0.88rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;" type="button"><svg style="width:16px;height:16px;fill:white" viewbox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg>Submit Form</button></div><div class="netlify-success" id="success-wcc-staff-clearances-qualifications" style="display:none;background:#d4edda;border:1px solid #c3e6cb;color:#155724;border-radius:8px;padding:16px 20px;margin-top:12px;font-weight:600;">✅ Submitted! Data sent to Wander Community Care. Click <strong>Save Signed PDF</strong> above to save your copy.</div>
 </div>
 </div>
@@ -860,20 +912,35 @@
 <label class="confirm-check-item"><input name="i_understand_this_information_will_be_kept_confide" type="checkbox"/> I understand this information will be kept confidential and used only for workplace health and safety purposes</label>
 <label class="confirm-check-item"><input name="i_will_update_this_information_if_my_circumstances" type="checkbox"/> I will update this information if my circumstances change</label>
 </div>
-<div class="sig-grid">
-<div class="sig-block">
-<label>Staff Member Name</label>
-<input name="staff_member_name_2" placeholder="Full name" type="text"/>
-<div class="sig-line"></div>
-<div style="margin-top:28px"><input name="date" type="date"/></div>
+<div class="sig-grid-inputs"><div class="sig-party"><div class="sig-party-title">Worker</div><div class="field-group">
+<label class="sig-label">Worker Signature</label>
+<div class="sig-wrap">
+<canvas class="sig-canvas" id="sig-staff_worker"></canvas>
+<button class="sig-clear" onclick="clearSig('staff_worker')" type="button">Clear</button>
 </div>
-<div class="sig-block">
-<label>Received By (Office Use)</label>
-<input name="received_by_office_use" type="text"/>
-<div class="sig-line"></div>
-<div style="margin-top:28px"><input name="date_2" type="date"/></div>
+<img alt="Signature" class="sig-data-img" id="sig-img-staff_worker" src=""/>
+<input id="sig-data-staff_worker" name="signature_staff_worker" type="hidden"/>
+</div><div class="field-group">
+<label>Print Name</label>
+<input name="print_name_staff_worker" placeholder="Full name" type="text"/>
+</div><div class="field-group">
+<label>Date</label>
+<input name="date_staff_worker" type="date"/>
+</div></div><div class="sig-party"><div class="sig-party-title">Management</div><div class="field-group">
+<label class="sig-label">Management Signature</label>
+<div class="sig-wrap">
+<canvas class="sig-canvas" id="sig-staff_mgmt"></canvas>
+<button class="sig-clear" onclick="clearSig('staff_mgmt')" type="button">Clear</button>
 </div>
-</div>
+<img alt="Signature" class="sig-data-img" id="sig-img-staff_mgmt" src=""/>
+<input id="sig-data-staff_mgmt" name="signature_staff_mgmt" type="hidden"/>
+</div><div class="field-group">
+<label>Print Name</label>
+<input name="print_name_staff_mgmt" placeholder="Full name" readonly="" style="background:#f0f7f4;color:#555" type="text"/>
+</div><div class="field-group">
+<label>Date</label>
+<input name="date_staff_mgmt" readonly="" style="background:#f0f7f4;color:#555" type="date"/>
+</div></div></div>
 </div>
 <div class="btn-submit-row" style="margin-top:24px;padding:16px 20px;background:var(--green-pale,#f0f7f4);border-radius:8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;"><p style="font-size:0.82rem;color:#555;margin:0;max-width:400px;">Fill in all fields, sign below, then click <strong>Submit Form</strong>. You can save a PDF copy after submitting.</p><button class="btn-submit btn-save" onclick="return handleSubmit(event, 'wcc-staff-emergency-medical')" style="background:var(--green-dark,#1a3a2a);color:#fff;border:none;padding:12px 28px;border-radius:6px;font-size:0.88rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;" type="button"><svg style="width:16px;height:16px;fill:white" viewbox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg>Submit Form</button></div><div class="netlify-success" id="success-wcc-staff-emergency-medical" style="display:none;background:#d4edda;border:1px solid #c3e6cb;color:#155724;border-radius:8px;padding:16px 20px;margin-top:12px;font-weight:600;">✅ Submitted! Data sent to Wander Community Care. Click <strong>Save Signed PDF</strong> above to save your copy.</div>
 </div>
