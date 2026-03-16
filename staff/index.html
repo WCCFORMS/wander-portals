@@ -386,7 +386,22 @@
 <div class="field-group"><label>Classification Level</label>
 <select id="classLevel" name="classification_level" onchange="fillRate()">
 <option value="">-- Select --</option>
-<option value="43.10">Level 2 — Self Care Activities</option>
+<optgroup label="SCHADS Award — Support Worker (Casual, incl. 25% loading)">
+<option value="28.21">Level 1.1 — Entry level / induction</option>
+<option value="29.55">Level 1.2</option>
+<option value="30.90">Level 1.3</option>
+<option value="32.25">Level 1.4</option>
+<option value="33.57">Level 2.1 — Self care / community access</option>
+<option value="34.92">Level 2.2</option>
+<option value="36.27">Level 2.3</option>
+<option value="37.62">Level 2.4</option>
+<option value="38.96">Level 3.1 — Higher responsibility / complex needs</option>
+<option value="40.31">Level 3.2</option>
+<option value="41.66">Level 3.3</option>
+<option value="42.99">Level 3.4</option>
+<option value="44.34">Level 4.1 — Senior / coordinator</option>
+<option value="45.69">Level 4.2</option>
+</optgroup>
 </select>
 </div>
 <div class="field-group"><label>Base Hourly Rate (incl. casual loading)</label><input id="hourlyRate" name="base_hourly_rate_incl_casual_loading" placeholder="Auto-filled when level selected" type="text"/></div>
@@ -1007,8 +1022,12 @@ window.addEventListener('resize', initAllSigs);
 function fillRate() {
   var sel = document.getElementById('classLevel');
   var rateField = document.getElementById('hourlyRate');
-  if (sel && rateField) {
-    rateField.value = sel.value ? '$' + sel.value + ' / hr' : '';
+  if (!sel || !rateField) return;
+  if (sel.value) {
+    var label = sel.options[sel.selectedIndex].text;
+    rateField.value = '$' + parseFloat(sel.value).toFixed(2) + ' / hr  (' + label + ')';
+  } else {
+    rateField.value = '';
   }
 }
 
