@@ -953,25 +953,27 @@ async function captureFormAsPDF(formEl, formTitle, formName) {
   formEl.querySelectorAll('.sig-canvas').forEach(function(c) { c.dataset.ov = c.style.display; c.style.display = 'none'; });
   formEl.querySelectorAll('.sig-data-img').forEach(function(img) { img.dataset.ov = img.style.display; img.style.display = 'block'; });
 
-  // ── 2. Suppress placeholder text by blanking placeholder attributes ────────
-  // html2canvas renders its own DOM — CSS pseudo-elements (::placeholder) are
-  // not reliably applied. Instead we blank the placeholder attribute directly
-  // and restore it after screenshotting.
-  var phBackup = [];
+  // ── 2. Hide placeholder text and unselected dropdowns ───────────────────────
+  // Placeholder text shows when a field has no value. The guaranteed way to
+  // hide it in html2canvas is to temporarily inject a value — the browser then
+  // treats the field as filled and suppresses the placeholder automatically.
+  // We use a zero-width space so the field looks visually empty but has "content".
+  var emptyInputs = [];
   formEl.querySelectorAll('input, textarea').forEach(function(el) {
-    var ph = el.getAttribute('placeholder');
-    if (ph) {
-      phBackup.push({ el: el, ph: ph });
-      el.setAttribute('placeholder', '\u00A0'); // non-breaking space — renders blank
+    var isHidden = el.type === 'hidden' || el.type === 'submit' || el.type === 'checkbox' || el.type === 'radio';
+    if (!isHidden && !el.value) {
+      emptyInputs.push(el);
+      el.value = '\u200B'; // zero-width space — hides placeholder, renders blank
     }
   });
 
-  // Hide unselected dropdowns (showing "-- Select --")
+  // Hide "-- Select --" on unselected dropdowns by blanking the option text
   var selBackup = [];
   formEl.querySelectorAll('select').forEach(function(sel) {
     if (!sel.value || sel.options[sel.selectedIndex].value === '') {
-      selBackup.push({ el: sel, color: sel.style.color });
-      sel.style.color = 'transparent';
+      var opt = sel.options[sel.selectedIndex];
+      selBackup.push({ opt: opt, text: opt.text });
+      opt.text = '';
     }
   });
 
@@ -992,10 +994,10 @@ async function captureFormAsPDF(formEl, formTitle, formName) {
     hideEls.forEach(function(el) { el.style.display = el.dataset.oh || ''; });
     formEl.querySelectorAll('.sig-canvas').forEach(function(c) { c.style.display = c.dataset.ov || ''; });
     formEl.querySelectorAll('.sig-data-img').forEach(function(img) { img.style.display = img.dataset.ov || ''; });
-    // Restore placeholder text
-    phBackup.forEach(function(item) { item.el.setAttribute('placeholder', item.ph); });
-    // Restore select colours
-    selBackup.forEach(function(item) { item.el.style.color = item.color; });
+    // Restore empty inputs (remove the zero-width space)
+    emptyInputs.forEach(function(el) { el.value = ''; });
+    // Restore select option text
+    selBackup.forEach(function(item) { item.opt.text = item.text; });
   }
   if (!canvas) return null;
 
