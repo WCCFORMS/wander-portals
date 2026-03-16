@@ -1128,7 +1128,7 @@ function getFieldValue(input) {
 async function captureFormAsPDF(formEl, formTitle, formName) {
   var formBody = formEl.querySelector('.form-body') || formEl;
 
-  // ── 1. Hide UI-only elements ─────────────────────────────────────────────
+  // ── 1. Hide UI elements, show sig images ─────────────────────────────────
   var hideEls = formEl.querySelectorAll('.btn-submit-row, .netlify-success, .sig-clear');
   hideEls.forEach(function(el) { el.dataset.oh = el.style.display; el.style.display = 'none'; });
   formEl.querySelectorAll('.sig-canvas').forEach(function(c) { c.dataset.ov = c.style.display; c.style.display = 'none'; });
@@ -1136,26 +1136,10 @@ async function captureFormAsPDF(formEl, formTitle, formName) {
 
   // ── 2. Suppress placeholder text ─────────────────────────────────────────
   var phStyle = document.createElement('style');
-  phStyle.textContent = [
-    'input::placeholder,textarea::placeholder{color:transparent!important}',
-    'input::-webkit-input-placeholder,textarea::-webkit-input-placeholder{color:transparent!important}',
-    'input::-moz-placeholder,textarea::-moz-placeholder{color:transparent!important}'
-  ].join('');
+  phStyle.textContent = 'input::placeholder,textarea::placeholder{color:transparent!important}input::-webkit-input-placeholder,textarea::-webkit-input-placeholder{color:transparent!important}input::-moz-placeholder,textarea::-moz-placeholder{color:transparent!important}';
   document.head.appendChild(phStyle);
 
-  // ── 3. Collect section bottom edges in CSS px (relative to formBody top) ─
-  // We measure BEFORE screenshotting while layout is live.
-  var bodyRect = formBody.getBoundingClientRect();
-  var bodyTop  = bodyRect.top + window.scrollY;
-  // Gather bottom of every direct child — these are our candidate break points
-  var sectionBottoms = [];
-  Array.from(formBody.children).forEach(function(child) {
-    var r = child.getBoundingClientRect();
-    sectionBottoms.push(r.bottom + window.scrollY - bodyTop);
-  });
-  var totalHeight = formBody.scrollHeight;
-
-  // ── 4. Screenshot ─────────────────────────────────────────────────────────
+  // ── 3. Screenshot the full form ───────────────────────────────────────────
   var canvas;
   try {
     canvas = await html2canvas(formBody, {
@@ -1163,7 +1147,7 @@ async function captureFormAsPDF(formEl, formTitle, formName) {
       useCORS: true,
       backgroundColor: '#ffffff',
       scrollX: 0,
-      scrollY: 0,
+      scrollY: -window.scrollY,
       windowWidth: formBody.scrollWidth,
       logging: false,
       allowTaint: true
@@ -1176,96 +1160,35 @@ async function captureFormAsPDF(formEl, formTitle, formName) {
   }
   if (!canvas) return null;
 
-  // ── 5. Work out page geometry entirely in CANVAS PIXELS ──────────────────
-  // A4 page (portrait): 595.28 x 841.89 pt
-  // We use 28pt margin on all sides.
-  var MARGIN_PT  = 28;
-  var PAGE_W_PT  = 595.28;
-  var PAGE_H_PT  = 841.89;
-  var PRINT_W_PT = PAGE_W_PT - 2 * MARGIN_PT;   // 539.28 pt usable width
-  var PRINT_H_PT = PAGE_H_PT - 2 * MARGIN_PT;   // 785.89 pt usable height
-
-  // canvas px per CSS px (html2canvas scale=2 means 2, but use actual ratio)
-  var PX_SCALE   = canvas.width / formBody.scrollWidth;
-
-  // canvas px per pt (how many canvas pixels represent 1 printed pt)
-  var PX_PER_PT  = canvas.width / PRINT_W_PT;
-
-  // how many canvas pixels tall is one printed page?
-  var PAGE_H_PX  = Math.floor(PRINT_H_PT * PX_PER_PT);
-
-  // convert section bottom edges from CSS px → canvas px
-  var breaksPx = sectionBottoms.map(function(cssPx) {
-    return Math.round(cssPx * PX_SCALE);
-  });
-  // Always include the very end
-  breaksPx.push(canvas.height);
-
-  // ── 6. Build page slices ──────────────────────────────────────────────────
-  // Strategy: walk through the canvas top→bottom.
-  // For each page, the ideal end is pageStart + PAGE_H_PX.
-  // Find the LARGEST section-break point that is <= idealEnd (snap up to it).
-  // If no section break fits (one huge section), just cut at idealEnd anyway.
-  // If the remaining content after the last break is < PAGE_H_PX, it's the last page.
-  var pages = [];
-  var pos   = 0;
-
-  while (pos < canvas.height) {
-    var idealEnd = pos + PAGE_H_PX;
-
-    if (idealEnd >= canvas.height) {
-      // Everything remaining fits on this page
-      pages.push({ y: pos, h: canvas.height - pos });
-      break;
-    }
-
-    // Find the best (largest) break point <= idealEnd that is > pos
-    var bestBreak = -1;
-    for (var k = 0; k < breaksPx.length; k++) {
-      if (breaksPx[k] > pos && breaksPx[k] <= idealEnd) {
-        bestBreak = breaksPx[k];
-      }
-    }
-
-    if (bestBreak === -1) {
-      // No section break fits — hard cut at idealEnd
-      bestBreak = idealEnd;
-    }
-
-    pages.push({ y: pos, h: bestBreak - pos });
-    pos = bestBreak;
-  }
-
-  // ── 7. Render PDF pages ───────────────────────────────────────────────────
+  // ── 4. Multi-page PDF using the proven mm-units approach ──────────────────
+  // Based on the canonical jsPDF community solution: place the full image on
+  // every page with a negative Y offset so each page "windows" into the image.
+  // jsPDF clips to the page boundary automatically. No manual slicing needed.
   var jsPDFLib = window.jspdf ? window.jspdf.jsPDF : window.jsPDF;
   if (!jsPDFLib) { console.error('jsPDF not loaded'); return null; }
 
-  var pdf = new jsPDFLib({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+  var pdf        = new jsPDFLib('p', 'mm', 'a4');
+  var pageW      = 210;                                    // A4 width  in mm
+  var pageH      = 297;                                    // A4 height in mm
+  var margin     = 8;                                      // mm margins
+  var printW     = pageW - 2 * margin;                     // usable width
+  var printH     = pageH - 2 * margin;                     // usable height per page
+  var imgH       = (canvas.height / canvas.width) * printW; // proportional height in mm
+  var imgData    = canvas.toDataURL('image/jpeg', 0.92);
+  var heightLeft = imgH;
+  var position   = margin;                                 // start Y within first page
 
-  pages.forEach(function(pg, idx) {
-    if (idx > 0) pdf.addPage();
+  // First page
+  pdf.addImage(imgData, 'JPEG', margin, position, printW, imgH);
+  heightLeft -= printH;
 
-    var srcY = pg.y;
-    var srcH = Math.min(pg.h, canvas.height - srcY);
-    if (srcH <= 0) return;
-
-    // Crop this slice from the full canvas
-    var slice    = document.createElement('canvas');
-    slice.width  = canvas.width;
-    slice.height = srcH;
-    slice.getContext('2d').drawImage(
-      canvas,
-      0, srcY, canvas.width, srcH,
-      0, 0,    canvas.width, srcH
-    );
-
-    var imgData = slice.toDataURL('image/jpeg', 0.92);
-
-    // Height in pt: (canvas pixels) / (canvas px per pt)
-    var imgH_pt = srcH / PX_PER_PT;
-
-    pdf.addImage(imgData, 'JPEG', MARGIN_PT, MARGIN_PT, PRINT_W_PT, imgH_pt);
-  });
+  // Additional pages
+  while (heightLeft > 0) {
+    position = margin - (imgH - heightLeft); // shift image up by amount already printed
+    pdf.addPage();
+    pdf.addImage(imgData, 'JPEG', margin, position, printW, imgH);
+    heightLeft -= printH;
+  }
 
   return pdf;
 }
