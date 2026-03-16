@@ -945,7 +945,7 @@ function getFieldValue(input) {
 
 // ── Screenshot form → PDF using html2canvas ──────────────────────────────────
 async function captureFormAsPDF(formEl, formTitle, formName) {
-  var formBody = formEl.querySelector('.form-body') || formEl;
+  var formBody = formEl; // screenshot the full section so signatures (outside .form-body) are included
 
   // ── 1. Hide UI elements, show sig images ─────────────────────────────────
   var hideEls = formEl.querySelectorAll('.btn-submit-row, .netlify-success, .sig-clear');
