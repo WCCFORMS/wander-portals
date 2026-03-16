@@ -144,6 +144,19 @@ body{font-family:'Source Sans 3',sans-serif;background:var(--green-ultra-pale);c
 }
 .sig-data-img { display:none; max-width:480px; height:140px;
   border:1px solid #ccc; border-radius:6px; }
+
+.sig-grid-inputs { display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-top:16px; }
+.sig-party { background:#f8fcfa; border:1px solid #d0e8d8; border-radius:8px; padding:16px; }
+.sig-party-title { font-size:0.82rem; font-weight:700; color:#1a3a2a; margin-bottom:12px; }
+.sig-party .field-group { margin-bottom:10px; }
+.sig-party .field-group:last-child { margin-bottom:0; }
+@media(max-width:600px){ .sig-grid-inputs{ grid-template-columns:1fr; } }
+@media print {
+  .sig-party { background:white !important; }
+  .sig-data-img { display:block !important; }
+  .sig-canvas { display:none !important; }
+  .sig-clear { display:none !important; }
+}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
@@ -323,18 +336,36 @@ body{font-family:'Source Sans 3',sans-serif;background:var(--green-ultra-pale);c
 <h4>Agreement Confirmation</h4>
 <label class="confirm-check-item"><input name="i_have_read_understand_and_agree_to_this_service_a" type="checkbox"/> I have read, understand, and agree to this Service Agreement including pricing, travel, transport, cancellation, and (where applicable) Condition 2 arrangements</label>
 </div>
-<div class="sig-grid">
-<div><p style="font-weight:700;font-size:0.82rem;margin-bottom:4px;">Client / Guardian</p><div class="sig-line"></div><div class="sig-label">Signature</div><div style="margin-top:10px"><div class="sig-line"></div><div class="sig-label">Print Name                Date: ___/___/______</div></div></div>
-<div><p style="font-weight:700;font-size:0.82rem;margin-bottom:4px;">Wander Community Care</p><div class="sig-line"></div><div class="sig-label">Signature</div><div style="margin-top:10px"><div class="sig-line"></div><div class="sig-label">Print Name                Date: ___/___/______</div></div></div>
-</div>
-<div class="sig-block" id="sig-block-participant_signature">
-<label class="sig-label">Participant / Representative Signature</label>
+<div class="sig-grid-inputs"><div class="sig-party"><div class="sig-party-title">Client / Guardian</div><div class="field-group">
+<label class="sig-label">Client / Guardian Signature</label>
 <div class="sig-wrap">
-<canvas class="sig-canvas" id="sig-participant_signature"></canvas>
-<button class="sig-clear" onclick="clearSig('participant_signature')" type="button">Clear</button>
-</div><img alt="Signature" class="sig-data-img" id="sig-img-participant_signature" src=""/>
-<input id="sig-data-participant_signature" name="signature_participant_signature" type="hidden"/>
+<canvas class="sig-canvas" id="sig-intake_client"></canvas>
+<button class="sig-clear" onclick="clearSig('intake_client')" type="button">Clear</button>
 </div>
+<img alt="Signature" class="sig-data-img" id="sig-img-intake_client" src=""/>
+<input id="sig-data-intake_client" name="signature_intake_client" type="hidden"/>
+</div><div class="field-group">
+<label>Print Name</label>
+<input name="print_name_intake_client" placeholder="Full name" type="text"/>
+</div><div class="field-group">
+<label>Date</label>
+<input name="date_intake_client" type="date"/>
+</div></div><div class="sig-party"><div class="sig-party-title">Wander Community Care</div><div class="field-group">
+<label class="sig-label">Wander Community Care Signature</label>
+<div class="sig-wrap">
+<canvas class="sig-canvas" id="sig-intake_wcc"></canvas>
+<button class="sig-clear" onclick="clearSig('intake_wcc')" type="button">Clear</button>
+</div>
+<img alt="Signature" class="sig-data-img" id="sig-img-intake_wcc" src=""/>
+<input id="sig-data-intake_wcc" name="signature_intake_wcc" type="hidden"/>
+</div><div class="field-group">
+<label>Print Name</label>
+<input name="print_name_intake_wcc" placeholder="Full name" readonly="" style="background:#f0f7f4;color:#555" type="text"/>
+</div><div class="field-group">
+<label>Date</label>
+<input name="date_intake_wcc" readonly="" style="background:#f0f7f4;color:#555" type="date"/>
+</div></div></div>
+
 <div class="btn-submit-row" style="margin-top:24px;padding:16px 20px;background:var(--green-pale,#f0f7f4);border-radius:8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;"><p style="font-size:0.82rem;color:#555;margin:0;max-width:400px;">Fill in all fields, sign below, then click <strong>Submit Form</strong>. You can save a PDF copy after submitting.</p><button class="btn-submit btn-save" onclick="return handleSubmit(event, 'wcc-client-intake')" style="background:var(--green-dark,#1a3a2a);color:#fff;border:none;padding:12px 28px;border-radius:6px;font-size:0.88rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;" type="button"><svg style="width:16px;height:16px;fill:white" viewbox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg>Submit Form</button></div><div class="netlify-success" id="success-wcc-client-intake" style="display:none;background:#d4edda;border:1px solid #c3e6cb;color:#155724;border-radius:8px;padding:16px 20px;margin-top:12px;font-weight:600;">✅ Submitted! Data sent to Wander Community Care. Click <strong>Save Signed PDF</strong> above to save your copy.</div>
 </div></div></div><div class="netlify-success" id="success-wcc-client-intake" style="display:none;background:#d4edda;border:1px solid #c3e6cb;color:#155724;border-radius:8px;padding:16px 20px;margin-top:16px;font-weight:600;">
       ✅ Form submitted successfully. Netlify has captured your data. You can now save a PDF copy using the button below.
@@ -371,18 +402,36 @@ body{font-family:'Source Sans 3',sans-serif;background:var(--green-ultra-pale);c
 <label class="confirm-check-item" style="margin-bottom:10px"><input name="photosvideos_used_on_wander_community_care_social_" type="checkbox"/> Photos/videos used on Wander Community Care social media or website</label>
 <label class="confirm-check-item" style="margin-bottom:10px"><input name="i_do_not_consent_to_any_photos_or_videos_being_tak" type="checkbox"/> I do NOT consent to any photos or videos being taken</label>
 <div class="section-heading">Signatures</div>
-<div class="sig-grid">
-<div><p style="font-weight:700;font-size:0.82rem;margin-bottom:4px;">Client / Guardian</p><div class="sig-line"></div><div class="sig-label">Signature                     Date: ___/___/______</div></div>
-<div><p style="font-weight:700;font-size:0.82rem;margin-bottom:4px;">Wander Community Care</p><div class="sig-line"></div><div class="sig-label">Signature                     Date: ___/___/______</div></div>
-</div>
-<div class="sig-block" id="sig-block-consent_signature">
-<label class="sig-label">Participant / Representative Signature</label>
+<div class="sig-grid-inputs"><div class="sig-party"><div class="sig-party-title">Client / Guardian</div><div class="field-group">
+<label class="sig-label">Client / Guardian Signature</label>
 <div class="sig-wrap">
-<canvas class="sig-canvas" id="sig-consent_signature"></canvas>
-<button class="sig-clear" onclick="clearSig('consent_signature')" type="button">Clear</button>
-</div><img alt="Signature" class="sig-data-img" id="sig-img-consent_signature" src=""/>
-<input id="sig-data-consent_signature" name="signature_consent_signature" type="hidden"/>
+<canvas class="sig-canvas" id="sig-consent_client"></canvas>
+<button class="sig-clear" onclick="clearSig('consent_client')" type="button">Clear</button>
 </div>
+<img alt="Signature" class="sig-data-img" id="sig-img-consent_client" src=""/>
+<input id="sig-data-consent_client" name="signature_consent_client" type="hidden"/>
+</div><div class="field-group">
+<label>Print Name</label>
+<input name="print_name_consent_client" placeholder="Full name" type="text"/>
+</div><div class="field-group">
+<label>Date</label>
+<input name="date_consent_client" type="date"/>
+</div></div><div class="sig-party"><div class="sig-party-title">Wander Community Care</div><div class="field-group">
+<label class="sig-label">Wander Community Care Signature</label>
+<div class="sig-wrap">
+<canvas class="sig-canvas" id="sig-consent_wcc"></canvas>
+<button class="sig-clear" onclick="clearSig('consent_wcc')" type="button">Clear</button>
+</div>
+<img alt="Signature" class="sig-data-img" id="sig-img-consent_wcc" src=""/>
+<input id="sig-data-consent_wcc" name="signature_consent_wcc" type="hidden"/>
+</div><div class="field-group">
+<label>Print Name</label>
+<input name="print_name_consent_wcc" placeholder="Full name" readonly="" style="background:#f0f7f4;color:#555" type="text"/>
+</div><div class="field-group">
+<label>Date</label>
+<input name="date_consent_wcc" readonly="" style="background:#f0f7f4;color:#555" type="date"/>
+</div></div></div>
+
 <div class="btn-submit-row" style="margin-top:24px;padding:16px 20px;background:var(--green-pale,#f0f7f4);border-radius:8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;"><p style="font-size:0.82rem;color:#555;margin:0;max-width:400px;">Fill in all fields, sign below, then click <strong>Submit Form</strong>. You can save a PDF copy after submitting.</p><button class="btn-submit btn-save" onclick="return handleSubmit(event, 'wcc-client-consent')" style="background:var(--green-dark,#1a3a2a);color:#fff;border:none;padding:12px 28px;border-radius:6px;font-size:0.88rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;" type="button"><svg style="width:16px;height:16px;fill:white" viewbox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg>Submit Form</button></div><div class="netlify-success" id="success-wcc-client-consent" style="display:none;background:#d4edda;border:1px solid #c3e6cb;color:#155724;border-radius:8px;padding:16px 20px;margin-top:12px;font-weight:600;">✅ Submitted! Data sent to Wander Community Care. Click <strong>Save Signed PDF</strong> above to save your copy.</div>
 </div></div></div><div class="netlify-success" id="success-wcc-client-consent" style="display:none;background:#d4edda;border:1px solid #c3e6cb;color:#155724;border-radius:8px;padding:16px 20px;margin-top:16px;font-weight:600;">
       ✅ Form submitted successfully. Netlify has captured your data. You can now save a PDF copy using the button below.
@@ -415,11 +464,36 @@ body{font-family:'Source Sans 3',sans-serif;background:var(--green-ultra-pale);c
 <li>SA Police (if safety concern): <strong>000</strong></li>
 </ul></div>
 <div class="section-heading">Acknowledgement</div>
-<label class="confirm-check-item"><input name="i_have_received_and_understood_information_about_m" type="checkbox"> I have received and understood information about my rights and how to make a complaint</input></label>
-<div class="sig-grid" style="margin-top:16px">
-<div><p style="font-weight:700;font-size:0.82rem;margin-bottom:4px;">Client / Guardian</p><div class="sig-line"></div><div class="sig-label">Signature                     Date: ___/___/______</div></div>
-<div><p style="font-weight:700;font-size:0.82rem;margin-bottom:4px;">Wander Community Care</p><div class="sig-line"></div><div class="sig-label">Signature                     Date: ___/___/______</div></div>
+<label class="confirm-check-item"><input name="i_have_received_and_understood_information_about_m" type="checkbox"/> I have received and understood information about my rights and how to make a complaint</label>
+<div class="sig-grid-inputs"><div class="sig-party"><div class="sig-party-title">Client / Guardian</div><div class="field-group">
+<label class="sig-label">Client / Guardian Signature</label>
+<div class="sig-wrap">
+<canvas class="sig-canvas" id="sig-rights_client"></canvas>
+<button class="sig-clear" onclick="clearSig('rights_client')" type="button">Clear</button>
 </div>
+<img alt="Signature" class="sig-data-img" id="sig-img-rights_client" src=""/>
+<input id="sig-data-rights_client" name="signature_rights_client" type="hidden"/>
+</div><div class="field-group">
+<label>Print Name</label>
+<input name="print_name_rights_client" placeholder="Full name" type="text"/>
+</div><div class="field-group">
+<label>Date</label>
+<input name="date_rights_client" type="date"/>
+</div></div><div class="sig-party"><div class="sig-party-title">Wander Community Care</div><div class="field-group">
+<label class="sig-label">Wander Community Care Signature</label>
+<div class="sig-wrap">
+<canvas class="sig-canvas" id="sig-rights_wcc"></canvas>
+<button class="sig-clear" onclick="clearSig('rights_wcc')" type="button">Clear</button>
+</div>
+<img alt="Signature" class="sig-data-img" id="sig-img-rights_wcc" src=""/>
+<input id="sig-data-rights_wcc" name="signature_rights_wcc" type="hidden"/>
+</div><div class="field-group">
+<label>Print Name</label>
+<input name="print_name_rights_wcc" placeholder="Full name" readonly="" style="background:#f0f7f4;color:#555" type="text"/>
+</div><div class="field-group">
+<label>Date</label>
+<input name="date_rights_wcc" readonly="" style="background:#f0f7f4;color:#555" type="date"/>
+</div></div></div>
 <div class="btn-submit-row" style="margin-top:24px;padding:16px 20px;background:var(--green-pale,#f0f7f4);border-radius:8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;"><p style="font-size:0.82rem;color:#555;margin:0;max-width:400px;">Fill in all fields, sign below, then click <strong>Submit Form</strong>. You can save a PDF copy after submitting.</p><button class="btn-submit btn-save" onclick="return handleSubmit(event, 'wcc-client-rights')" style="background:var(--green-dark,#1a3a2a);color:#fff;border:none;padding:12px 28px;border-radius:6px;font-size:0.88rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;" type="button"><svg style="width:16px;height:16px;fill:white" viewbox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg>Submit Form</button></div><div class="netlify-success" id="success-wcc-client-rights" style="display:none;background:#d4edda;border:1px solid #c3e6cb;color:#155724;border-radius:8px;padding:16px 20px;margin-top:12px;font-weight:600;">✅ Submitted! Data sent to Wander Community Care. Click <strong>Save Signed PDF</strong> above to save your copy.</div>
 </div></div></div><div class="netlify-success" id="success-wcc-client-rights" style="display:none;background:#d4edda;border:1px solid #c3e6cb;color:#155724;border-radius:8px;padding:16px 20px;margin-top:16px;font-weight:600;">
       ✅ Form submitted successfully. Netlify has captured your data. You can now save a PDF copy using the button below.
@@ -456,18 +530,36 @@ body{font-family:'Source Sans 3',sans-serif;background:var(--green-ultra-pale);c
 <label class="confirm-check-item"><input name="geographic_isolation" type="checkbox"/> Geographic isolation</label>
 <div class="field-group" style="margin-top:10px"><label>Supervision &amp; monitoring plan</label><textarea name="supervision_monitoring_plan" placeholder="How will we ensure safety? Home visit schedule, independent check-ins, escalation procedures..."></textarea></div>
 <div class="section-heading">Signatures</div>
-<div class="sig-grid">
-<div><p style="font-weight:700;font-size:0.82rem;margin-bottom:4px;">Client / Guardian</p><div class="sig-line"></div><div class="sig-label">Signature                     Date: ___/___/______</div></div>
-<div><p style="font-weight:700;font-size:0.82rem;margin-bottom:4px;">Wander Community Care</p><div class="sig-line"></div><div class="sig-label">Signature                     Date: ___/___/______</div></div>
-</div>
-<div class="sig-block" id="sig-block-support_plan_signature">
-<label class="sig-label">Participant / Representative Signature</label>
+<div class="sig-grid-inputs"><div class="sig-party"><div class="sig-party-title">Client / Guardian</div><div class="field-group">
+<label class="sig-label">Client / Guardian Signature</label>
 <div class="sig-wrap">
-<canvas class="sig-canvas" id="sig-support_plan_signature"></canvas>
-<button class="sig-clear" onclick="clearSig('support_plan_signature')" type="button">Clear</button>
-</div><img alt="Signature" class="sig-data-img" id="sig-img-support_plan_signature" src=""/>
-<input id="sig-data-support_plan_signature" name="signature_support_plan_signature" type="hidden"/>
+<canvas class="sig-canvas" id="sig-support_client"></canvas>
+<button class="sig-clear" onclick="clearSig('support_client')" type="button">Clear</button>
 </div>
+<img alt="Signature" class="sig-data-img" id="sig-img-support_client" src=""/>
+<input id="sig-data-support_client" name="signature_support_client" type="hidden"/>
+</div><div class="field-group">
+<label>Print Name</label>
+<input name="print_name_support_client" placeholder="Full name" type="text"/>
+</div><div class="field-group">
+<label>Date</label>
+<input name="date_support_client" type="date"/>
+</div></div><div class="sig-party"><div class="sig-party-title">Wander Community Care</div><div class="field-group">
+<label class="sig-label">Wander Community Care Signature</label>
+<div class="sig-wrap">
+<canvas class="sig-canvas" id="sig-support_wcc"></canvas>
+<button class="sig-clear" onclick="clearSig('support_wcc')" type="button">Clear</button>
+</div>
+<img alt="Signature" class="sig-data-img" id="sig-img-support_wcc" src=""/>
+<input id="sig-data-support_wcc" name="signature_support_wcc" type="hidden"/>
+</div><div class="field-group">
+<label>Print Name</label>
+<input name="print_name_support_wcc" placeholder="Full name" readonly="" style="background:#f0f7f4;color:#555" type="text"/>
+</div><div class="field-group">
+<label>Date</label>
+<input name="date_support_wcc" readonly="" style="background:#f0f7f4;color:#555" type="date"/>
+</div></div></div>
+
 <div class="btn-submit-row" style="margin-top:24px;padding:16px 20px;background:var(--green-pale,#f0f7f4);border-radius:8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;"><p style="font-size:0.82rem;color:#555;margin:0;max-width:400px;">Fill in all fields, sign below, then click <strong>Submit Form</strong>. You can save a PDF copy after submitting.</p><button class="btn-submit btn-save" onclick="return handleSubmit(event, 'wcc-client-support')" style="background:var(--green-dark,#1a3a2a);color:#fff;border:none;padding:12px 28px;border-radius:6px;font-size:0.88rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;" type="button"><svg style="width:16px;height:16px;fill:white" viewbox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg>Submit Form</button></div><div class="netlify-success" id="success-wcc-client-support" style="display:none;background:#d4edda;border:1px solid #c3e6cb;color:#155724;border-radius:8px;padding:16px 20px;margin-top:12px;font-weight:600;">✅ Submitted! Data sent to Wander Community Care. Click <strong>Save Signed PDF</strong> above to save your copy.</div>
 </div></div></div><div class="netlify-success" id="success-wcc-client-support" style="display:none;background:#d4edda;border:1px solid #c3e6cb;color:#155724;border-radius:8px;padding:16px 20px;margin-top:16px;font-weight:600;">
       ✅ Form submitted successfully. Netlify has captured your data. You can now save a PDF copy using the button below.
@@ -492,10 +584,35 @@ body{font-family:'Source Sans 3',sans-serif;background:var(--green-ultra-pale);c
 <div class="field-group"><label>Emergency response plan</label><textarea name="emergency_response_plan" placeholder="Step-by-step: what should the worker do?"></textarea></div>
 <div class="field-group"><label>Who to contact after an incident</label><textarea name="who_to_contact_after_an_incident" placeholder="Management, family, behaviour support practitioner, NDIS Commission if needed"></textarea></div>
 <div class="section-heading">Signatures</div>
-<div class="sig-grid">
-<div><p style="font-weight:700;font-size:0.82rem;margin-bottom:4px;">Client / Guardian</p><div class="sig-line"></div><div class="sig-label">Signature                     Date: ___/___/______</div></div>
-<div><p style="font-weight:700;font-size:0.82rem;margin-bottom:4px;">Wander Community Care</p><div class="sig-line"></div><div class="sig-label">Signature                     Date: ___/___/______</div></div>
+<div class="sig-grid-inputs"><div class="sig-party"><div class="sig-party-title">Client / Guardian</div><div class="field-group">
+<label class="sig-label">Client / Guardian Signature</label>
+<div class="sig-wrap">
+<canvas class="sig-canvas" id="sig-bsp_client"></canvas>
+<button class="sig-clear" onclick="clearSig('bsp_client')" type="button">Clear</button>
 </div>
+<img alt="Signature" class="sig-data-img" id="sig-img-bsp_client" src=""/>
+<input id="sig-data-bsp_client" name="signature_bsp_client" type="hidden"/>
+</div><div class="field-group">
+<label>Print Name</label>
+<input name="print_name_bsp_client" placeholder="Full name" type="text"/>
+</div><div class="field-group">
+<label>Date</label>
+<input name="date_bsp_client" type="date"/>
+</div></div><div class="sig-party"><div class="sig-party-title">Wander Community Care</div><div class="field-group">
+<label class="sig-label">Wander Community Care Signature</label>
+<div class="sig-wrap">
+<canvas class="sig-canvas" id="sig-bsp_wcc"></canvas>
+<button class="sig-clear" onclick="clearSig('bsp_wcc')" type="button">Clear</button>
+</div>
+<img alt="Signature" class="sig-data-img" id="sig-img-bsp_wcc" src=""/>
+<input id="sig-data-bsp_wcc" name="signature_bsp_wcc" type="hidden"/>
+</div><div class="field-group">
+<label>Print Name</label>
+<input name="print_name_bsp_wcc" placeholder="Full name" readonly="" style="background:#f0f7f4;color:#555" type="text"/>
+</div><div class="field-group">
+<label>Date</label>
+<input name="date_bsp_wcc" readonly="" style="background:#f0f7f4;color:#555" type="date"/>
+</div></div></div>
 <div class="btn-submit-row" style="margin-top:24px;padding:16px 20px;background:var(--green-pale,#f0f7f4);border-radius:8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;"><p style="font-size:0.82rem;color:#555;margin:0;max-width:400px;">Fill in all fields, sign below, then click <strong>Submit Form</strong>. You can save a PDF copy after submitting.</p><button class="btn-submit btn-save" onclick="return handleSubmit(event, 'wcc-client-bsp')" style="background:var(--green-dark,#1a3a2a);color:#fff;border:none;padding:12px 28px;border-radius:6px;font-size:0.88rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;" type="button"><svg style="width:16px;height:16px;fill:white" viewbox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg>Submit Form</button></div><div class="netlify-success" id="success-wcc-client-bsp" style="display:none;background:#d4edda;border:1px solid #c3e6cb;color:#155724;border-radius:8px;padding:16px 20px;margin-top:12px;font-weight:600;">✅ Submitted! Data sent to Wander Community Care. Click <strong>Save Signed PDF</strong> above to save your copy.</div>
 </div></div></div><div class="netlify-success" id="success-wcc-client-bsp" style="display:none;background:#d4edda;border:1px solid #c3e6cb;color:#155724;border-radius:8px;padding:16px 20px;margin-top:16px;font-weight:600;">
       ✅ Form submitted successfully. Netlify has captured your data. You can now save a PDF copy using the button below.
@@ -515,10 +632,35 @@ body{font-family:'Source Sans 3',sans-serif;background:var(--green-ultra-pale);c
 <div class="field-group"><label>If no, explain what differed</label><textarea name="if_no_explain_what_differed"></textarea></div>
 <div class="callout-purple"><strong>Staff Guidance — Mandatory Reporting:</strong> All use of restrictive practices must be reported to management within 24 hours. Wander Community Care must report to the NDIS Quality &amp; Safeguards Commission. Failure to report is a serious compliance breach.</div>
 <div class="section-heading">Signatures</div>
-<div class="sig-grid">
-<div><p style="font-weight:700;font-size:0.82rem;margin-bottom:4px;">Worker</p><div class="sig-line"></div><div class="sig-label">Signature                     Date: ___/___/______</div></div>
-<div><p style="font-weight:700;font-size:0.82rem;margin-bottom:4px;">Management Review</p><div class="sig-line"></div><div class="sig-label">Signature                     Date: ___/___/______</div></div>
+<div class="sig-grid-inputs"><div class="sig-party"><div class="sig-party-title">Worker</div><div class="field-group">
+<label class="sig-label">Worker Signature</label>
+<div class="sig-wrap">
+<canvas class="sig-canvas" id="sig-rp_worker"></canvas>
+<button class="sig-clear" onclick="clearSig('rp_worker')" type="button">Clear</button>
 </div>
+<img alt="Signature" class="sig-data-img" id="sig-img-rp_worker" src=""/>
+<input id="sig-data-rp_worker" name="signature_rp_worker" type="hidden"/>
+</div><div class="field-group">
+<label>Print Name</label>
+<input name="print_name_rp_worker" placeholder="Full name" type="text"/>
+</div><div class="field-group">
+<label>Date</label>
+<input name="date_rp_worker" type="date"/>
+</div></div><div class="sig-party"><div class="sig-party-title">Management Review</div><div class="field-group">
+<label class="sig-label">Management Review Signature</label>
+<div class="sig-wrap">
+<canvas class="sig-canvas" id="sig-rp_mgmt"></canvas>
+<button class="sig-clear" onclick="clearSig('rp_mgmt')" type="button">Clear</button>
+</div>
+<img alt="Signature" class="sig-data-img" id="sig-img-rp_mgmt" src=""/>
+<input id="sig-data-rp_mgmt" name="signature_rp_mgmt" type="hidden"/>
+</div><div class="field-group">
+<label>Print Name</label>
+<input name="print_name_rp_mgmt" placeholder="Full name" readonly="" style="background:#f0f7f4;color:#555" type="text"/>
+</div><div class="field-group">
+<label>Date</label>
+<input name="date_rp_mgmt" readonly="" style="background:#f0f7f4;color:#555" type="date"/>
+</div></div></div>
 <div class="btn-submit-row" style="margin-top:24px;padding:16px 20px;background:var(--green-pale,#f0f7f4);border-radius:8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;"><p style="font-size:0.82rem;color:#555;margin:0;max-width:400px;">Fill in all fields, sign below, then click <strong>Submit Form</strong>. You can save a PDF copy after submitting.</p><button class="btn-submit btn-save" onclick="return handleSubmit(event, 'wcc-client-rp')" style="background:var(--green-dark,#1a3a2a);color:#fff;border:none;padding:12px 28px;border-radius:6px;font-size:0.88rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;" type="button"><svg style="width:16px;height:16px;fill:white" viewbox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg>Submit Form</button></div><div class="netlify-success" id="success-wcc-client-rp" style="display:none;background:#d4edda;border:1px solid #c3e6cb;color:#155724;border-radius:8px;padding:16px 20px;margin-top:12px;font-weight:600;">✅ Submitted! Data sent to Wander Community Care. Click <strong>Save Signed PDF</strong> above to save your copy.</div>
 </div></div></div><div class="netlify-success" id="success-wcc-client-rp" style="display:none;background:#d4edda;border:1px solid #c3e6cb;color:#155724;border-radius:8px;padding:16px 20px;margin-top:16px;font-weight:600;">
       ✅ Form submitted successfully. Netlify has captured your data. You can now save a PDF copy using the button below.
@@ -581,18 +723,36 @@ body{font-family:'Source Sans 3',sans-serif;background:var(--green-ultra-pale);c
 <h4>Addendum Confirmation</h4>
 <label class="confirm-check-item"><input name="i_have_read_and_agree_to_this_overnight_travel_add" type="checkbox"/> I have read and agree to this overnight &amp; travel addendum including all pricing, sleepover rules, and schedule arrangements</label>
 </div>
-<div class="sig-grid">
-<div><p style="font-weight:700;font-size:0.82rem;margin-bottom:4px;">Client / Guardian</p><div class="sig-line"></div><div class="sig-label">Signature                     Date: ___/___/______</div></div>
-<div><p style="font-weight:700;font-size:0.82rem;margin-bottom:4px;">Wander Community Care</p><div class="sig-line"></div><div class="sig-label">Signature                     Date: ___/___/______</div></div>
-</div>
-<div class="sig-block" id="sig-block-overnight_signature">
-<label class="sig-label">Participant / Representative Signature</label>
+<div class="sig-grid-inputs"><div class="sig-party"><div class="sig-party-title">Client / Guardian</div><div class="field-group">
+<label class="sig-label">Client / Guardian Signature</label>
 <div class="sig-wrap">
-<canvas class="sig-canvas" id="sig-overnight_signature"></canvas>
-<button class="sig-clear" onclick="clearSig('overnight_signature')" type="button">Clear</button>
-</div><img alt="Signature" class="sig-data-img" id="sig-img-overnight_signature" src=""/>
-<input id="sig-data-overnight_signature" name="signature_overnight_signature" type="hidden"/>
+<canvas class="sig-canvas" id="sig-overnight_client"></canvas>
+<button class="sig-clear" onclick="clearSig('overnight_client')" type="button">Clear</button>
 </div>
+<img alt="Signature" class="sig-data-img" id="sig-img-overnight_client" src=""/>
+<input id="sig-data-overnight_client" name="signature_overnight_client" type="hidden"/>
+</div><div class="field-group">
+<label>Print Name</label>
+<input name="print_name_overnight_client" placeholder="Full name" type="text"/>
+</div><div class="field-group">
+<label>Date</label>
+<input name="date_overnight_client" type="date"/>
+</div></div><div class="sig-party"><div class="sig-party-title">Wander Community Care</div><div class="field-group">
+<label class="sig-label">Wander Community Care Signature</label>
+<div class="sig-wrap">
+<canvas class="sig-canvas" id="sig-overnight_wcc"></canvas>
+<button class="sig-clear" onclick="clearSig('overnight_wcc')" type="button">Clear</button>
+</div>
+<img alt="Signature" class="sig-data-img" id="sig-img-overnight_wcc" src=""/>
+<input id="sig-data-overnight_wcc" name="signature_overnight_wcc" type="hidden"/>
+</div><div class="field-group">
+<label>Print Name</label>
+<input name="print_name_overnight_wcc" placeholder="Full name" readonly="" style="background:#f0f7f4;color:#555" type="text"/>
+</div><div class="field-group">
+<label>Date</label>
+<input name="date_overnight_wcc" readonly="" style="background:#f0f7f4;color:#555" type="date"/>
+</div></div></div>
+
 <div class="btn-submit-row" style="margin-top:24px;padding:16px 20px;background:var(--green-pale,#f0f7f4);border-radius:8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;"><p style="font-size:0.82rem;color:#555;margin:0;max-width:400px;">Fill in all fields, sign below, then click <strong>Submit Form</strong>. You can save a PDF copy after submitting.</p><button class="btn-submit btn-save" onclick="return handleSubmit(event, 'wcc-client-overnight')" style="background:var(--green-dark,#1a3a2a);color:#fff;border:none;padding:12px 28px;border-radius:6px;font-size:0.88rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;" type="button"><svg style="width:16px;height:16px;fill:white" viewbox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg>Submit Form</button></div><div class="netlify-success" id="success-wcc-client-overnight" style="display:none;background:#d4edda;border:1px solid #c3e6cb;color:#155724;border-radius:8px;padding:16px 20px;margin-top:12px;font-weight:600;">✅ Submitted! Data sent to Wander Community Care. Click <strong>Save Signed PDF</strong> above to save your copy.</div>
 </div></div></div><div class="netlify-success" id="success-wcc-client-overnight" style="display:none;background:#d4edda;border:1px solid #c3e6cb;color:#155724;border-radius:8px;padding:16px 20px;margin-top:16px;font-weight:600;">
       ✅ Form submitted successfully. Netlify has captured your data. You can now save a PDF copy using the button below.
