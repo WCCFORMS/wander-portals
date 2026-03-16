@@ -162,6 +162,7 @@
 .sig-data-img { display:none; max-width:480px; height:140px;
   border:1px solid #ccc; border-radius:6px; }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 <div class="portal-header">
@@ -881,8 +882,9 @@
       ✅ Form submitted successfully. Netlify has captured your data. You can now save a PDF copy using the button below.
     </div></form></div>
 <script>
+// ── Load jsPDF from CDN (loaded in <head>) ────────────────────────────────────
+
 // ── Signature Pad ────────────────────────────────────────────────────────────
-var sigPads = {};
 function initSig(id) {
   var canvas = document.getElementById('sig-' + id);
   if (!canvas) return;
@@ -928,9 +930,7 @@ function clearSig(id) {
   if (img) { img.src = ''; img.style.display = 'none'; }
 }
 function initAllSigs() {
-  document.querySelectorAll('.sig-canvas').forEach(function(c) {
-    initSig(c.id.replace('sig-',''));
-  });
+  document.querySelectorAll('.sig-canvas').forEach(function(c) { initSig(c.id.replace('sig-','')); });
 }
 window.addEventListener('load', initAllSigs);
 window.addEventListener('resize', initAllSigs);
@@ -945,7 +945,321 @@ function showTab(name) {
   window.scrollTo({top: 0, behavior: 'smooth'});
 }
 
-// ── Submit to Web3Forms ───────────────────────────────────────────────────────
+// ── Form titles ───────────────────────────────────────────────────────────────
+var FORM_TITLES = {
+  'wcc-client-intake':                'Client Intake & Service Agreement',
+  'wcc-client-consent':               'Consent & Privacy Agreement',
+  'wcc-client-rights':                'Your Rights & Complaints',
+  'wcc-client-support':               'Personal Support & Safety Plan',
+  'wcc-client-bsp':                   'Behaviour Support Plan',
+  'wcc-client-rp':                    'Restrictive Practice Documentation',
+  'wcc-client-overnight':             'Overnight & Travel Addendum',
+  'wcc-staff-personal-info':          'Staff Personal Information',
+  'wcc-staff-employment-agreement':   'Employment Agreement',
+  'wcc-staff-conduct-confidentiality':'Code of Conduct & Confidentiality',
+  'wcc-staff-clearances-qualifications':'Clearances & Qualifications',
+  'wcc-staff-emergency-medical':      'Emergency & Medical Information'
+};
+
+// ── Collect all fields from a form into structured sections ───────────────────
+function collectFormData(form) {
+  var sections = [];
+  var currentSection = { heading: null, fields: [] };
+
+  // Walk all meaningful children of the form body
+  var allNodes = form.querySelectorAll(
+    '.section-heading, .field-group, .check-item, .confirm-check-item, .sig-block'
+  );
+
+  allNodes.forEach(function(node) {
+
+    // Section heading
+    if (node.classList.contains('section-heading')) {
+      if (currentSection.fields.length > 0 || currentSection.heading) {
+        sections.push(currentSection);
+      }
+      currentSection = { heading: node.textContent.trim(), fields: [] };
+      return;
+    }
+
+    // Signature block
+    if (node.classList.contains('sig-block')) {
+      var labelEl = node.querySelector('.sig-label');
+      var canvas  = node.querySelector('canvas');
+      if (!canvas) return;
+      var hasDrawing = false;
+      try {
+        var ctx2 = canvas.getContext('2d');
+        var d = ctx2.getImageData(0, 0, canvas.width, canvas.height).data;
+        for (var i = 3; i < d.length; i += 4) { if (d[i] > 10) { hasDrawing = true; break; } }
+      } catch(e) {}
+      currentSection.fields.push({
+        type:    'signature',
+        label:   labelEl ? labelEl.textContent.trim() : 'Signature',
+        dataUrl: hasDrawing ? canvas.toDataURL('image/png') : null
+      });
+      return;
+    }
+
+    // Regular field-group
+    if (node.classList.contains('field-group')) {
+      var label = node.querySelector('label');
+      if (!label) return;
+      var labelText = '';
+      label.childNodes.forEach(function(n) {
+        if (n.nodeType === 3) labelText += n.textContent;
+      });
+      labelText = labelText.trim().replace(/\s*\*$/, '').replace(/\s+/g, ' ');
+      if (!labelText) labelText = label.textContent.trim().replace(/\s*\*$/, '');
+
+      var input = node.querySelector('input:not([type=hidden]), select, textarea');
+      if (!input) return;
+
+      var value = getFieldValue(input);
+      if (labelText && labelText.length > 1) {
+        currentSection.fields.push({ type: 'field', label: labelText, value: value });
+      }
+      return;
+    }
+
+    // Checkbox item
+    if (node.classList.contains('check-item') || node.classList.contains('confirm-check-item')) {
+      var cb = node.querySelector('input[type=checkbox]');
+      if (!cb) return;
+      var lbl = node.textContent.trim().replace(/\s+/g,' ');
+      currentSection.fields.push({
+        type:    'checkbox',
+        label:   lbl,
+        checked: cb.checked
+      });
+    }
+  });
+
+  if (currentSection.fields.length > 0 || currentSection.heading) {
+    sections.push(currentSection);
+  }
+  return sections;
+}
+
+function getFieldValue(input) {
+  if (!input) return '—';
+  if (input.type === 'checkbox') return input.checked ? 'Yes' : 'No';
+  if (input.type === 'radio') {
+    var radios = document.querySelectorAll('input[name="' + input.name + '"]');
+    var val = '';
+    radios.forEach(function(r) { if (r.checked) val = r.value; });
+    return val || '—';
+  }
+  if (input.tagName === 'SELECT') {
+    return input.selectedIndex >= 0 ? input.options[input.selectedIndex].text : '—';
+  }
+  return input.value ? input.value.trim() : '—';
+}
+
+// ── Generate PDF using jsPDF ──────────────────────────────────────────────────
+function generatePDF(form, formTitle, formName) {
+  var jsPDF = window.jspdf ? window.jspdf.jsPDF : (window.jsPDF || null);
+  if (!jsPDF) { console.error('jsPDF not loaded'); return null; }
+
+  var doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  var pw   = 210;   // page width mm
+  var ph   = 297;   // page height mm
+  var ml   = 15;    // margin left
+  var mr   = 15;    // margin right
+  var cw   = pw - ml - mr;  // content width
+  var y    = 15;    // current Y
+  var lineH = 5.5;  // base line height
+
+  function checkPage(needed) {
+    if (y + needed > ph - 15) {
+      doc.addPage();
+      y = 15;
+    }
+  }
+
+  // ── Header ──
+  doc.setFillColor(26, 58, 42);       // dark green
+  doc.rect(0, 0, pw, 22, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  doc.text('Wander Community Care', ml, 9);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.text(formTitle, ml, 16);
+
+  // Submitted date top right
+  var now = new Date();
+  var dateStr = now.toLocaleDateString('en-AU', {day:'2-digit',month:'2-digit',year:'numeric'}) +
+    '  ' + now.toLocaleTimeString('en-AU', {hour:'2-digit',minute:'2-digit'});
+  doc.text('Submitted: ' + dateStr, pw - mr, 16, { align: 'right' });
+
+  y = 30;
+  doc.setTextColor(0, 0, 0);
+
+  var sections = collectFormData(form);
+
+  sections.forEach(function(section) {
+
+    // Section heading
+    if (section.heading) {
+      checkPage(12);
+      doc.setFillColor(240, 247, 244);
+      doc.rect(ml, y - 4, cw, 8, 'F');
+      doc.setDrawColor(26, 58, 42);
+      doc.setLineWidth(0.4);
+      doc.line(ml, y + 4, ml + cw, y + 4);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.setTextColor(26, 58, 42);
+      doc.text(section.heading, ml + 2, y + 1);
+      y += 10;
+      doc.setTextColor(0, 0, 0);
+    }
+
+    section.fields.forEach(function(field) {
+
+      if (field.type === 'signature') {
+        checkPage(28);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8.5);
+        doc.setTextColor(80, 80, 80);
+        doc.text(field.label + ':', ml, y);
+        y += 3;
+        if (field.dataUrl) {
+          try {
+            doc.addImage(field.dataUrl, 'PNG', ml, y, 70, 18);
+          } catch(e) { doc.text('[Signature image error]', ml, y + 5); }
+        } else {
+          doc.setDrawColor(180, 180, 180);
+          doc.setLineWidth(0.3);
+          doc.rect(ml, y, 70, 18);
+          doc.setFont('helvetica', 'italic');
+          doc.setFontSize(8);
+          doc.setTextColor(160, 160, 160);
+          doc.text('Not signed', ml + 3, y + 10);
+        }
+        y += 22;
+        doc.setTextColor(0, 0, 0);
+        return;
+      }
+
+      if (field.type === 'checkbox') {
+        checkPage(7);
+        var sym = field.checked ? '☑' : '☐';
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8.5);
+        doc.setTextColor(field.checked ? 26 : 120, field.checked ? 58 : 120, field.checked ? 42 : 120);
+        var lines = doc.splitTextToSize(sym + '  ' + field.label, cw - 4);
+        lines.forEach(function(line) {
+          checkPage(lineH);
+          doc.text(line, ml + 2, y);
+          y += lineH;
+        });
+        doc.setTextColor(0,0,0);
+        return;
+      }
+
+      // Regular field
+      if (field.value === '—') return;  // skip blanks
+      checkPage(8);
+      var labelW = 65;
+      var valueW = cw - labelW - 3;
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.setTextColor(90, 90, 90);
+      var labelLines = doc.splitTextToSize(field.label, labelW);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(26, 58, 42);
+      var valueLines = doc.splitTextToSize(field.value, valueW);
+
+      var rowH = Math.max(labelLines.length, valueLines.length) * lineH + 2;
+      checkPage(rowH + 2);
+
+      // Light row background for alternating
+      doc.setFillColor(248, 252, 250);
+      doc.rect(ml, y - 3.5, cw, rowH, 'F');
+
+      // Label
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.setTextColor(90, 90, 90);
+      doc.text(labelLines, ml + 1, y);
+
+      // Value
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(26, 58, 42);
+      doc.text(valueLines, ml + labelW + 2, y);
+
+      y += rowH + 1;
+    });
+
+    y += 4; // space after section
+  });
+
+  // Footer on each page
+  var totalPages = doc.getNumberOfPages();
+  for (var p = 1; p <= totalPages; p++) {
+    doc.setPage(p);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(150, 150, 150);
+    doc.text('Wander Community Care  |  Provider ID: 4-K64VXR5  |  ABN: 98 486 956 378', ml, ph - 8);
+    doc.text('Page ' + p + ' of ' + totalPages, pw - mr, ph - 8, { align: 'right' });
+    doc.setDrawColor(200, 200, 200);
+    doc.setLineWidth(0.3);
+    doc.line(ml, ph - 11, pw - mr, ph - 11);
+  }
+
+  return doc;
+}
+
+// ── Build plain-text email summary (fallback / readable version) ──────────────
+function buildEmailHTML(sections, formTitle) {
+  var rows = '';
+  sections.forEach(function(section) {
+    if (section.heading) {
+      rows += '<tr><td colspan="2" style="padding:10px 0 4px;font-size:12px;font-weight:bold;color:#1a3a2a;border-bottom:1px solid #c8e6c9">' + section.heading + '</td></tr>';
+    }
+    section.fields.forEach(function(field) {
+      if (field.type === 'signature') {
+        rows += '<tr><td style="padding:4px 12px 4px 0;font-size:12px;color:#666;vertical-align:top">' + field.label + '</td>' +
+          '<td style="padding:4px 0;font-size:12px;color:#1a3a2a">' +
+          (field.dataUrl ? '<img src="' + field.dataUrl + '" style="height:50px;border:1px solid #ccc;border-radius:3px"/>' : 'Not signed') +
+          '</td></tr>';
+      } else if (field.type === 'checkbox') {
+        if (field.checked) {
+          rows += '<tr><td colspan="2" style="padding:2px 0;font-size:12px;color:#1a3a2a">☑ ' + field.label + '</td></tr>';
+        }
+      } else {
+        if (field.value && field.value !== '—') {
+          rows += '<tr><td style="padding:4px 12px 4px 0;font-size:12px;color:#666;vertical-align:top;white-space:nowrap">' +
+            field.label + '</td><td style="padding:4px 0;font-size:12px;font-weight:600;color:#1a3a2a">' + field.value + '</td></tr>';
+        }
+      }
+    });
+  });
+
+  var now = new Date();
+  var dateStr = now.toLocaleDateString('en-AU', {day:'2-digit',month:'2-digit',year:'numeric'}) +
+    ' ' + now.toLocaleTimeString('en-AU', {hour:'2-digit',minute:'2-digit'});
+
+  return '<div style="font-family:Arial,sans-serif;max-width:620px">' +
+    '<div style="background:#1a3a2a;padding:16px 24px;border-radius:8px 8px 0 0">' +
+    '<h2 style="color:#fff;margin:0;font-size:17px">Wander Community Care</h2>' +
+    '<p style="color:#aed6c4;margin:4px 0 0;font-size:13px">' + formTitle + '</p></div>' +
+    '<div style="background:#f0f7f4;padding:8px 24px;border-bottom:1px solid #ddd">' +
+    '<p style="color:#888;font-size:11px;margin:6px 0">Submitted: ' + dateStr +
+    ' &nbsp;|&nbsp; A signed PDF copy has been automatically downloaded on the submitter\'s device.</p></div>' +
+    '<div style="padding:16px 24px;background:#fff;border:1px solid #ddd;border-top:none;border-radius:0 0 8px 8px">' +
+    '<table style="width:100%;border-collapse:collapse">' + rows + '</table></div></div>';
+}
+
+// ── Main submit handler ────────────────────────────────────────────────────────
 function handleSubmit(event, formName) {
   event.preventDefault();
   event.stopPropagation();
@@ -953,40 +1267,60 @@ function handleSubmit(event, formName) {
   var form = event.target.closest('form');
   if (!form) return false;
 
-  // Flush all signature canvases to hidden fields
-  document.querySelectorAll('.sig-canvas').forEach(function(c) {
-    flushSig(c.id.replace('sig-',''));
-  });
+  // Flush all sigs
+  document.querySelectorAll('.sig-canvas').forEach(function(c) { flushSig(c.id.replace('sig-','')); });
 
-  // Collect data NOW before anything changes
-  var data = new FormData(form);
-  data.set('access_key', '663f207b-2b36-4e6f-8513-5def799607bc');
-  data.set('subject', 'Wander Community Care — New Submission: ' +
-    formName.replace('wcc-','').replace(/-/g,' ')
-             .replace(/\b\w/g, function(c){ return c.toUpperCase(); }));
-  data.set('from_name', 'Wander Community Care Forms');
-
-  // Signature data URLs are too large for email — replace with note
-  var toSet = [];
-  data.forEach(function(val, key) {
-    if (key.startsWith('signature_') && val && val.length > 200) {
-      toSet.push(key);
-    }
-  });
-  toSet.forEach(function(key) { data.set(key, '[Digital signature drawn on form]'); });
-
+  var formTitle = FORM_TITLES[formName] || formName;
   var btn = form.querySelector('.btn-submit');
-  if (btn) { btn.disabled = true; btn.textContent = 'Submitting…'; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Generating PDF…'; }
 
-  fetch('https://api.web3forms.com/submit', { method: 'POST', body: data })
+  // Collect data
+  var sections = collectFormData(form);
+
+  // 1. Generate and auto-download the PDF
+  var pdfGenerated = false;
+  try {
+    var doc = generatePDF(form, formTitle, formName);
+    if (doc) {
+      var safeTitle = formTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+      var now = new Date();
+      var dateTag = now.getFullYear() + ('0'+(now.getMonth()+1)).slice(-2) + ('0'+now.getDate()).slice(-2);
+      doc.save('WCC_' + safeTitle + '_' + dateTag + '.pdf');
+      pdfGenerated = true;
+    }
+  } catch(e) {
+    console.error('PDF generation error:', e);
+  }
+
+  // 2. Send email via Web3Forms
+  if (btn) btn.textContent = 'Sending…';
+  var emailHTML = buildEmailHTML(sections, formTitle);
+
+  fetch('https://api.web3forms.com/submit', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      access_key: '663f207b-2b36-4e6f-8513-5def799607bc',
+      subject:    'Wander Community Care — ' + formTitle,
+      from_name:  'Wander Community Care Forms',
+      message:    emailHTML,
+      botcheck:   false
+    })
+  })
   .then(function(res) { return res.json(); })
   .then(function(json) {
     if (json.success) {
       var banner = document.getElementById('success-' + formName);
-      if (banner) { banner.style.display = 'block'; banner.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+      if (banner) {
+        banner.innerHTML = '✅ Submitted! ' +
+          (pdfGenerated ? 'A <strong>signed PDF has been downloaded</strong> to this device. ' : '') +
+          'A copy of the form has been sent to Wander Community Care.';
+        banner.style.display = 'block';
+        banner.scrollIntoView({behavior:'smooth', block:'center'});
+      }
       if (btn) {
         btn.disabled = false;
-        btn.innerHTML = '<svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:white;vertical-align:middle;margin-right:6px"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg> Save Signed PDF';
+        btn.innerHTML = '<svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:white;vertical-align:middle;margin-right:6px"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg> Save PDF Again';
         btn.setAttribute('onclick', 'event.preventDefault(); window.print(); return false;');
       }
     } else {
@@ -1002,6 +1336,7 @@ function handleSubmit(event, formName) {
 
   return false;
 }
+
 </script>
 </body>
 </html>
