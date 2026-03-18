@@ -316,10 +316,18 @@ body{font-family:'Source Sans 3',sans-serif;background:var(--green-ultra-pale);c
 <li><strong>Genuine emergencies</strong> (hospitalisation, serious illness): No charge — contact us ASAP</li>
 </ul></div>
 <div class="callout-blue"><strong>NDIS Protocol — Short Notice Cancellations:</strong> Providers can only claim a cancellation if: (1) the service agreement allows it, (2) the provider couldn't find alternative billable work for the worker, and (3) the provider must still pay the worker. We will always attempt to find alternative work before charging.</div>
+<div class="policy-box"><h4>Flexible Hours</h4>
+<ul>
+<li><strong>Estimated hours only:</strong> The support hours shown in this agreement are estimates based on current needs. Actual hours may vary week to week.</li>
+<li><strong>More hours:</strong> If you need additional support in any week, simply contact us and we will arrange it at the rates already agreed in this document — no new agreement required.</li>
+<li><strong>Fewer hours:</strong> You are not obligated to use the estimated hours each week. Unused hours are not charged unless a short notice cancellation applies (see below).</li>
+<li><strong>Budget limit:</strong> Supports are delivered within your available NDIS plan funds. We will notify you if your funding is nearing its limit.</li>
+</ul></div>
 <div class="policy-box"><h4>Changes to This Agreement</h4>
 <ul>
 <li><strong>To end services:</strong> Either party — 14 days' written notice</li>
-<li><strong>To change services:</strong> Mutual agreement, documented in writing</li>
+<li><strong>To change services:</strong> Mutual agreement, documented in writing. Minor variations in hours do not require a new agreement.</li>
+<li><strong>Significant changes:</strong> If the type of support, support worker, or overall structure changes materially, we will document this in a written variation signed by both parties.</li>
 <li><strong>Price changes:</strong> At least 14 days' notice with updated agreement for signature</li>
 </ul></div>
 <div class="policy-box"><h4>Contact &amp; Feedback</h4>
@@ -725,7 +733,7 @@ body{font-family:'Source Sans 3',sans-serif;background:var(--green-ultra-pale);c
 <tr><td>Night-time sleepover</td><td><input class="cost-input" name="cost_sleepover_units" oninput="calcRow(this)" placeholder="0" type="number" min="0" step="0.5"/> nights</td><td>$297.60/night</td><td><span class="cost-calc" id="calc_sleepover">$0.00</span><input name="cost_sleepover_weekly" type="hidden" id="calc_sleepover_val"/></td></tr>
 <tr><td>Saturday support</td><td><input class="cost-input" name="cost_sat_units" oninput="calcRow(this)" placeholder="0" type="number" min="0" step="0.5"/> hrs</td><td>$98.83/hr</td><td><span class="cost-calc" id="calc_sat">$0.00</span><input name="cost_sat_weekly" type="hidden" id="calc_sat_val"/></td></tr>
 <tr><td>Sunday support</td><td><input class="cost-input" name="cost_sun_units" oninput="calcRow(this)" placeholder="0" type="number" min="0" step="0.5"/> hrs</td><td>$127.43/hr</td><td><span class="cost-calc" id="calc_sun">$0.00</span><input name="cost_sun_weekly" type="hidden" id="calc_sun_val"/></td></tr>
-<tr><td>Provider travel (labour)</td><td><input class="cost-input" name="cost_travel_hr_units" oninput="calcRow(this)" placeholder="0" type="number" min="0" step="0.5"/> hrs</td><td><input class="cost-rate-input" name="cost_travel_hr_rate" oninput="calcRow(this)" placeholder="0.00" type="number" min="0" step="0.01"/>/hr</td><td><span class="cost-calc" id="calc_travel_hr">$0.00</span><input name="cost_travel_hr_weekly" type="hidden" id="calc_travel_hr_val"/></td></tr>
+<tr><td>Travel to/from — weekday<br/><small style="color:#888;font-size:.8rem">Use matching support rate (e.g. $77.38 eve)</small></td><td><input class="cost-input" name="cost_travel_wkd_units" oninput="calcRow(this)" placeholder="0" type="number" min="0" step="0.5"/> hrs</td><td><input class="cost-rate-input" name="cost_travel_wkd_rate" oninput="calcRow(this)" placeholder="77.38" type="number" min="0" step="0.01" value="77.38"/>/hr</td><td><span class="cost-calc" id="calc_travel_wkd">$0.00</span><input name="cost_travel_wkd_weekly" type="hidden" id="calc_travel_wkd_val"/></td></tr><tr><td>Travel to/from — weekend<br/><small style="color:#888;font-size:.8rem">Sat $98.83 · Sun $127.43</small></td><td><input class="cost-input" name="cost_travel_wkn_units" oninput="calcRow(this)" placeholder="0" type="number" min="0" step="0.5"/> hrs</td><td><input class="cost-rate-input" name="cost_travel_wkn_rate" oninput="calcRow(this)" placeholder="127.43" type="number" min="0" step="0.01" value="127.43"/>/hr</td><td><span class="cost-calc" id="calc_travel_wkn">$0.00</span><input name="cost_travel_wkn_weekly" type="hidden" id="calc_travel_wkn_val"/></td></tr>
 <tr><td>Provider travel (km)</td><td><input class="cost-input" name="cost_travel_km_units" oninput="calcRow(this)" placeholder="0" type="number" min="0" step="0.5"/> km</td><td>$0.99/km</td><td><span class="cost-calc" id="calc_travel_km">$0.00</span><input name="cost_travel_km_weekly" type="hidden" id="calc_travel_km_val"/></td></tr>
 <tr style="background:var(--green-pale);font-weight:700"><td colspan="3"><strong>ESTIMATED TOTAL PER WEEK</strong></td><td><strong><span id="calc_total">$0.00</span></strong><input name="cost_total_weekly" type="hidden" id="calc_total_val"/></td></tr>
 </tbody></table>
@@ -1169,7 +1177,7 @@ function calcRow(el) {
 }
 
 function calcGrandTotal() {
-  var prefixes = ['eve_active','sleepover','sat','sun','travel_hr','travel_km'];
+  var prefixes = ['eve_active','sleepover','sat','sun','travel_wkd','travel_wkn','travel_km'];
   var grand = 0;
   prefixes.forEach(function(p) {
     var el = document.getElementById('calc_' + p);
