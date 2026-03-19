@@ -368,7 +368,7 @@ body{font-family:'Source Sans 3',sans-serif;background:var(--green-ultra-pale);c
 <input name="print_name_intake_client" placeholder="Full name" type="text"/>
 </div><div class="field-group">
 <label>Date</label>
-<input name="date_intake_client" type="date"/>
+<input name="date_intake_client" type="text" placeholder="DD/MM/YYYY" oninput="fmtDate(this)" maxlength="10"/>
 </div></div><div class="sig-party"><div class="sig-party-title">Wander Community Care</div><div class="field-group">
 <label class="sig-label">Wander Community Care Signature</label>
 <div class="sig-wrap">
@@ -379,10 +379,10 @@ body{font-family:'Source Sans 3',sans-serif;background:var(--green-ultra-pale);c
 <input id="sig-data-intake_wcc" name="signature_intake_wcc" type="hidden"/>
 </div><div class="field-group">
 <label>Print Name</label>
-<input name="print_name_intake_wcc" placeholder="Full name" readonly="" style="background:#f0f7f4;color:#555" type="text"/>
+<input name="print_name_intake_wcc" placeholder="Full name" style="background:#f0f7f4;color:#555" type="text"/>
 </div><div class="field-group">
 <label>Date</label>
-<input name="date_intake_wcc" readonly="" style="background:#f0f7f4;color:#555" type="date"/>
+<input name="date_intake_wcc" style="background:#f0f7f4;color:#555" type="text" placeholder="DD/MM/YYYY" oninput="fmtDate(this)" maxlength="10"/>
 </div></div></div>
 
 <div class="btn-submit-row" style="margin-top:24px;padding:16px 20px;background:var(--green-pale,#f0f7f4);border-radius:8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;"><p style="font-size:0.82rem;color:#555;margin:0;max-width:400px;">Fill in all fields, sign below, then click <strong>Save &amp; Download PDF</strong>. You can save a PDF copy after submitting.</p><button class="btn-submit btn-save" onclick="return handleSubmit(event, 'wcc-client-intake')" style="background:var(--green-dark,#1a3a2a);color:#fff;border:none;padding:12px 28px;border-radius:6px;font-size:0.88rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;" type="button"><svg style="width:16px;height:16px;fill:white" viewbox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg>Save &amp; Download PDF</button></div><div class="netlify-success" id="success-wcc-client-intake" style="display:none;background:#d4edda;border:1px solid #c3e6cb;color:#155724;border-radius:8px;padding:16px 20px;margin-top:12px;font-weight:600;">✅ Submitted! Data sent to Wander Community Care. Click <strong>Save Signed PDF</strong> above to save your copy.</div>
@@ -434,7 +434,7 @@ body{font-family:'Source Sans 3',sans-serif;background:var(--green-ultra-pale);c
 <input name="print_name_consent_client" placeholder="Full name" type="text"/>
 </div><div class="field-group">
 <label>Date</label>
-<input name="date_consent_client" type="date"/>
+<input name="date_consent_client" type="text" placeholder="DD/MM/YYYY" oninput="fmtDate(this)" maxlength="10"/>
 </div></div><div class="sig-party"><div class="sig-party-title">Wander Community Care</div><div class="field-group">
 <label class="sig-label">Wander Community Care Signature</label>
 <div class="sig-wrap">
@@ -445,10 +445,10 @@ body{font-family:'Source Sans 3',sans-serif;background:var(--green-ultra-pale);c
 <input id="sig-data-consent_wcc" name="signature_consent_wcc" type="hidden"/>
 </div><div class="field-group">
 <label>Print Name</label>
-<input name="print_name_consent_wcc" placeholder="Full name" readonly="" style="background:#f0f7f4;color:#555" type="text"/>
+<input name="print_name_consent_wcc" placeholder="Full name" style="background:#f0f7f4;color:#555" type="text"/>
 </div><div class="field-group">
 <label>Date</label>
-<input name="date_consent_wcc" readonly="" style="background:#f0f7f4;color:#555" type="date"/>
+<input name="date_consent_wcc" style="background:#f0f7f4;color:#555" type="text" placeholder="DD/MM/YYYY" oninput="fmtDate(this)" maxlength="10"/>
 </div></div></div>
 
 <div class="btn-submit-row" style="margin-top:24px;padding:16px 20px;background:var(--green-pale,#f0f7f4);border-radius:8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;"><p style="font-size:0.82rem;color:#555;margin:0;max-width:400px;">Fill in all fields, sign below, then click <strong>Save &amp; Download PDF</strong>. You can save a PDF copy after submitting.</p><button class="btn-submit btn-save" onclick="return handleSubmit(event, 'wcc-client-consent')" style="background:var(--green-dark,#1a3a2a);color:#fff;border:none;padding:12px 28px;border-radius:6px;font-size:0.88rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;" type="button"><svg style="width:16px;height:16px;fill:white" viewbox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg>Save &amp; Download PDF</button></div><div class="netlify-success" id="success-wcc-client-consent" style="display:none;background:#d4edda;border:1px solid #c3e6cb;color:#155724;border-radius:8px;padding:16px 20px;margin-top:12px;font-weight:600;">✅ Submitted! Data sent to Wander Community Care. Click <strong>Save Signed PDF</strong> above to save your copy.</div>
@@ -497,7 +497,7 @@ body{font-family:'Source Sans 3',sans-serif;background:var(--green-ultra-pale);c
 <input name="print_name_rights_client" placeholder="Full name" type="text"/>
 </div><div class="field-group">
 <label>Date</label>
-<input name="date_rights_client" type="date"/>
+<input name="date_rights_client" type="text" placeholder="DD/MM/YYYY" oninput="fmtDate(this)" maxlength="10"/>
 </div></div><div class="sig-party"><div class="sig-party-title">Wander Community Care</div><div class="field-group">
 <label class="sig-label">Wander Community Care Signature</label>
 <div class="sig-wrap">
@@ -508,10 +508,10 @@ body{font-family:'Source Sans 3',sans-serif;background:var(--green-ultra-pale);c
 <input id="sig-data-rights_wcc" name="signature_rights_wcc" type="hidden"/>
 </div><div class="field-group">
 <label>Print Name</label>
-<input name="print_name_rights_wcc" placeholder="Full name" readonly="" style="background:#f0f7f4;color:#555" type="text"/>
+<input name="print_name_rights_wcc" placeholder="Full name" style="background:#f0f7f4;color:#555" type="text"/>
 </div><div class="field-group">
 <label>Date</label>
-<input name="date_rights_wcc" readonly="" style="background:#f0f7f4;color:#555" type="date"/>
+<input name="date_rights_wcc" style="background:#f0f7f4;color:#555" type="text" placeholder="DD/MM/YYYY" oninput="fmtDate(this)" maxlength="10"/>
 </div></div></div>
 <div class="btn-submit-row" style="margin-top:24px;padding:16px 20px;background:var(--green-pale,#f0f7f4);border-radius:8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;"><p style="font-size:0.82rem;color:#555;margin:0;max-width:400px;">Fill in all fields, sign below, then click <strong>Save &amp; Download PDF</strong>. You can save a PDF copy after submitting.</p><button class="btn-submit btn-save" onclick="return handleSubmit(event, 'wcc-client-rights')" style="background:var(--green-dark,#1a3a2a);color:#fff;border:none;padding:12px 28px;border-radius:6px;font-size:0.88rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;" type="button"><svg style="width:16px;height:16px;fill:white" viewbox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg>Save &amp; Download PDF</button></div><div class="netlify-success" id="success-wcc-client-rights" style="display:none;background:#d4edda;border:1px solid #c3e6cb;color:#155724;border-radius:8px;padding:16px 20px;margin-top:12px;font-weight:600;">✅ Submitted! Data sent to Wander Community Care. Click <strong>Save Signed PDF</strong> above to save your copy.</div>
 </div></div></div><div class="netlify-success" id="success-wcc-client-rights" style="display:none;background:#d4edda;border:1px solid #c3e6cb;color:#155724;border-radius:8px;padding:16px 20px;margin-top:16px;font-weight:600;">
@@ -562,7 +562,7 @@ body{font-family:'Source Sans 3',sans-serif;background:var(--green-ultra-pale);c
 <input name="print_name_support_client" placeholder="Full name" type="text"/>
 </div><div class="field-group">
 <label>Date</label>
-<input name="date_support_client" type="date"/>
+<input name="date_support_client" type="text" placeholder="DD/MM/YYYY" oninput="fmtDate(this)" maxlength="10"/>
 </div></div><div class="sig-party"><div class="sig-party-title">Wander Community Care</div><div class="field-group">
 <label class="sig-label">Wander Community Care Signature</label>
 <div class="sig-wrap">
@@ -573,10 +573,10 @@ body{font-family:'Source Sans 3',sans-serif;background:var(--green-ultra-pale);c
 <input id="sig-data-support_wcc" name="signature_support_wcc" type="hidden"/>
 </div><div class="field-group">
 <label>Print Name</label>
-<input name="print_name_support_wcc" placeholder="Full name" readonly="" style="background:#f0f7f4;color:#555" type="text"/>
+<input name="print_name_support_wcc" placeholder="Full name" style="background:#f0f7f4;color:#555" type="text"/>
 </div><div class="field-group">
 <label>Date</label>
-<input name="date_support_wcc" readonly="" style="background:#f0f7f4;color:#555" type="date"/>
+<input name="date_support_wcc" style="background:#f0f7f4;color:#555" type="text" placeholder="DD/MM/YYYY" oninput="fmtDate(this)" maxlength="10"/>
 </div></div></div>
 
 <div class="btn-submit-row" style="margin-top:24px;padding:16px 20px;background:var(--green-pale,#f0f7f4);border-radius:8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;"><p style="font-size:0.82rem;color:#555;margin:0;max-width:400px;">Fill in all fields, sign below, then click <strong>Save &amp; Download PDF</strong>. You can save a PDF copy after submitting.</p><button class="btn-submit btn-save" onclick="return handleSubmit(event, 'wcc-client-support')" style="background:var(--green-dark,#1a3a2a);color:#fff;border:none;padding:12px 28px;border-radius:6px;font-size:0.88rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;" type="button"><svg style="width:16px;height:16px;fill:white" viewbox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg>Save &amp; Download PDF</button></div><div class="netlify-success" id="success-wcc-client-support" style="display:none;background:#d4edda;border:1px solid #c3e6cb;color:#155724;border-radius:8px;padding:16px 20px;margin-top:12px;font-weight:600;">✅ Submitted! Data sent to Wander Community Care. Click <strong>Save Signed PDF</strong> above to save your copy.</div>
@@ -616,7 +616,7 @@ body{font-family:'Source Sans 3',sans-serif;background:var(--green-ultra-pale);c
 <input name="print_name_bsp_client" placeholder="Full name" type="text"/>
 </div><div class="field-group">
 <label>Date</label>
-<input name="date_bsp_client" type="date"/>
+<input name="date_bsp_client" type="text" placeholder="DD/MM/YYYY" oninput="fmtDate(this)" maxlength="10"/>
 </div></div><div class="sig-party"><div class="sig-party-title">Wander Community Care</div><div class="field-group">
 <label class="sig-label">Wander Community Care Signature</label>
 <div class="sig-wrap">
@@ -627,10 +627,10 @@ body{font-family:'Source Sans 3',sans-serif;background:var(--green-ultra-pale);c
 <input id="sig-data-bsp_wcc" name="signature_bsp_wcc" type="hidden"/>
 </div><div class="field-group">
 <label>Print Name</label>
-<input name="print_name_bsp_wcc" placeholder="Full name" readonly="" style="background:#f0f7f4;color:#555" type="text"/>
+<input name="print_name_bsp_wcc" placeholder="Full name" style="background:#f0f7f4;color:#555" type="text"/>
 </div><div class="field-group">
 <label>Date</label>
-<input name="date_bsp_wcc" readonly="" style="background:#f0f7f4;color:#555" type="date"/>
+<input name="date_bsp_wcc" style="background:#f0f7f4;color:#555" type="text" placeholder="DD/MM/YYYY" oninput="fmtDate(this)" maxlength="10"/>
 </div></div></div>
 <div class="btn-submit-row" style="margin-top:24px;padding:16px 20px;background:var(--green-pale,#f0f7f4);border-radius:8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;"><p style="font-size:0.82rem;color:#555;margin:0;max-width:400px;">Fill in all fields, sign below, then click <strong>Save &amp; Download PDF</strong>. You can save a PDF copy after submitting.</p><button class="btn-submit btn-save" onclick="return handleSubmit(event, 'wcc-client-bsp')" style="background:var(--green-dark,#1a3a2a);color:#fff;border:none;padding:12px 28px;border-radius:6px;font-size:0.88rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;" type="button"><svg style="width:16px;height:16px;fill:white" viewbox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg>Save &amp; Download PDF</button></div><div class="netlify-success" id="success-wcc-client-bsp" style="display:none;background:#d4edda;border:1px solid #c3e6cb;color:#155724;border-radius:8px;padding:16px 20px;margin-top:12px;font-weight:600;">✅ Submitted! Data sent to Wander Community Care. Click <strong>Save Signed PDF</strong> above to save your copy.</div>
 </div></div></div><div class="netlify-success" id="success-wcc-client-bsp" style="display:none;background:#d4edda;border:1px solid #c3e6cb;color:#155724;border-radius:8px;padding:16px 20px;margin-top:16px;font-weight:600;">
@@ -664,7 +664,7 @@ body{font-family:'Source Sans 3',sans-serif;background:var(--green-ultra-pale);c
 <input name="print_name_rp_worker" placeholder="Full name" type="text"/>
 </div><div class="field-group">
 <label>Date</label>
-<input name="date_rp_worker" type="date"/>
+<input name="date_rp_worker" type="text" placeholder="DD/MM/YYYY" oninput="fmtDate(this)" maxlength="10"/>
 </div></div><div class="sig-party"><div class="sig-party-title">Management Review</div><div class="field-group">
 <label class="sig-label">Management Review Signature</label>
 <div class="sig-wrap">
@@ -675,10 +675,10 @@ body{font-family:'Source Sans 3',sans-serif;background:var(--green-ultra-pale);c
 <input id="sig-data-rp_mgmt" name="signature_rp_mgmt" type="hidden"/>
 </div><div class="field-group">
 <label>Print Name</label>
-<input name="print_name_rp_mgmt" placeholder="Full name" readonly="" style="background:#f0f7f4;color:#555" type="text"/>
+<input name="print_name_rp_mgmt" placeholder="Full name" style="background:#f0f7f4;color:#555" type="text"/>
 </div><div class="field-group">
 <label>Date</label>
-<input name="date_rp_mgmt" readonly="" style="background:#f0f7f4;color:#555" type="date"/>
+<input name="date_rp_mgmt" style="background:#f0f7f4;color:#555" type="text" placeholder="DD/MM/YYYY" oninput="fmtDate(this)" maxlength="10"/>
 </div></div></div>
 <div class="btn-submit-row" style="margin-top:24px;padding:16px 20px;background:var(--green-pale,#f0f7f4);border-radius:8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;"><p style="font-size:0.82rem;color:#555;margin:0;max-width:400px;">Fill in all fields, sign below, then click <strong>Save &amp; Download PDF</strong>. You can save a PDF copy after submitting.</p><button class="btn-submit btn-save" onclick="return handleSubmit(event, 'wcc-client-rp')" style="background:var(--green-dark,#1a3a2a);color:#fff;border:none;padding:12px 28px;border-radius:6px;font-size:0.88rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;" type="button"><svg style="width:16px;height:16px;fill:white" viewbox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg>Save &amp; Download PDF</button></div><div class="netlify-success" id="success-wcc-client-rp" style="display:none;background:#d4edda;border:1px solid #c3e6cb;color:#155724;border-radius:8px;padding:16px 20px;margin-top:12px;font-weight:600;">✅ Submitted! Data sent to Wander Community Care. Click <strong>Save Signed PDF</strong> above to save your copy.</div>
 </div></div></div><div class="netlify-success" id="success-wcc-client-rp" style="display:none;background:#d4edda;border:1px solid #c3e6cb;color:#155724;border-radius:8px;padding:16px 20px;margin-top:16px;font-weight:600;">
@@ -755,7 +755,7 @@ body{font-family:'Source Sans 3',sans-serif;background:var(--green-ultra-pale);c
 <input name="print_name_overnight_client" placeholder="Full name" type="text"/>
 </div><div class="field-group">
 <label>Date</label>
-<input name="date_overnight_client" type="date"/>
+<input name="date_overnight_client" type="text" placeholder="DD/MM/YYYY" oninput="fmtDate(this)" maxlength="10"/>
 </div></div><div class="sig-party"><div class="sig-party-title">Wander Community Care</div><div class="field-group">
 <label class="sig-label">Wander Community Care Signature</label>
 <div class="sig-wrap">
@@ -766,10 +766,10 @@ body{font-family:'Source Sans 3',sans-serif;background:var(--green-ultra-pale);c
 <input id="sig-data-overnight_wcc" name="signature_overnight_wcc" type="hidden"/>
 </div><div class="field-group">
 <label>Print Name</label>
-<input name="print_name_overnight_wcc" placeholder="Full name" readonly="" style="background:#f0f7f4;color:#555" type="text"/>
+<input name="print_name_overnight_wcc" placeholder="Full name" style="background:#f0f7f4;color:#555" type="text"/>
 </div><div class="field-group">
 <label>Date</label>
-<input name="date_overnight_wcc" readonly="" style="background:#f0f7f4;color:#555" type="date"/>
+<input name="date_overnight_wcc" style="background:#f0f7f4;color:#555" type="text" placeholder="DD/MM/YYYY" oninput="fmtDate(this)" maxlength="10"/>
 </div></div></div>
 
 <div class="btn-submit-row" style="margin-top:24px;padding:16px 20px;background:var(--green-pale,#f0f7f4);border-radius:8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;"><p style="font-size:0.82rem;color:#555;margin:0;max-width:400px;">Fill in all fields, sign below, then click <strong>Save &amp; Download PDF</strong>. You can save a PDF copy after submitting.</p><button class="btn-submit btn-save" onclick="return handleSubmit(event, 'wcc-client-overnight')" style="background:var(--green-dark,#1a3a2a);color:#fff;border:none;padding:12px 28px;border-radius:6px;font-size:0.88rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;" type="button"><svg style="width:16px;height:16px;fill:white" viewbox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg>Save &amp; Download PDF</button></div><div class="netlify-success" id="success-wcc-client-overnight" style="display:none;background:#d4edda;border:1px solid #c3e6cb;color:#155724;border-radius:8px;padding:16px 20px;margin-top:12px;font-weight:600;">✅ Submitted! Data sent to Wander Community Care. Click <strong>Save Signed PDF</strong> above to save your copy.</div>
@@ -813,8 +813,20 @@ function flushSig(id) {
   var hidden = document.getElementById('sig-data-' + id);
   if (hidden) hidden.value = dataUrl;
   var img = document.getElementById('sig-img-' + id);
-  if (img) { img.src = dataUrl; img.style.display = 'block'; }
+  if (img) {
+    img.src = dataUrl;
+    img.style.display = 'block';
+    img.style.visibility = 'visible';
+    img.style.opacity = '1';
+  }
 }
+function fmtDate(el) {
+  var v = el.value.replace(/[^0-9]/g, '');
+  if (v.length >= 3 && v.length <= 4) v = v.slice(0,2) + '/' + v.slice(2);
+  else if (v.length >= 5) v = v.slice(0,2) + '/' + v.slice(2,4) + '/' + v.slice(4,8);
+  el.value = v;
+}
+
 function clearSig(id) {
   var canvas = document.getElementById('sig-' + id);
   if (!canvas) return;
@@ -988,6 +1000,11 @@ async function captureFormAsPDF(formEl, formTitle, formName) {
   // ── 3. Screenshot the full form ───────────────────────────────────────────
   var canvas;
   try {
+    // Force reflow so sig-img elements are visible before html2canvas reads the DOM
+    void formBody.offsetHeight;
+    // Wait one animation frame to ensure images are painted
+    await new Promise(function(resolve) { requestAnimationFrame(function() { requestAnimationFrame(resolve); }); });
+
     canvas = await html2canvas(formBody, {
       scale: 2,
       useCORS: true,
@@ -996,7 +1013,9 @@ async function captureFormAsPDF(formEl, formTitle, formName) {
       scrollY: -window.scrollY,
       windowWidth: formBody.scrollWidth,
       logging: false,
-      allowTaint: true
+      allowTaint: true,
+      imageTimeout: 0,
+      removeContainer: true
     });
   } finally {
     hideEls.forEach(function(el) { el.style.display = el.dataset.oh || ''; });
