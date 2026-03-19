@@ -324,7 +324,7 @@
 <input name="print_name_emp_worker" placeholder="Full name" type="text"/>
 </div><div class="field-group">
 <label>Date</label>
-<input name="date_emp_worker" type="date"/>
+<input name="date_emp_worker" type="text" placeholder="DD/MM/YYYY" oninput="fmtDate(this)" maxlength="10"/>
 </div></div><div class="sig-party"><div class="sig-party-title">Employer</div><div class="field-group">
 <label class="sig-label">Employer Signature</label>
 <div class="sig-wrap">
@@ -335,10 +335,10 @@
 <input id="sig-data-emp_employer" name="signature_emp_employer" type="hidden"/>
 </div><div class="field-group">
 <label>Print Name</label>
-<input name="print_name_emp_employer" placeholder="Full name" readonly="" style="background:#f0f7f4;color:#555" type="text"/>
+<input name="print_name_emp_employer" placeholder="Full name" style="background:#f0f7f4;color:#555" type="text"/>
 </div><div class="field-group">
 <label>Date</label>
-<input name="date_emp_employer" readonly="" style="background:#f0f7f4;color:#555" type="date"/>
+<input name="date_emp_employer" style="background:#f0f7f4;color:#555" type="text" placeholder="DD/MM/YYYY" oninput="fmtDate(this)" maxlength="10"/>
 </div></div></div>
 </div>
 <div class="btn-submit-row" style="margin-top:24px;padding:16px 20px;background:var(--green-pale,#f0f7f4);border-radius:8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;"><p style="font-size:0.82rem;color:#555;margin:0;max-width:400px;">Fill in all fields, sign below, then click <strong>Save &amp; Download PDF</strong>. You can save a PDF copy after submitting.</p><button class="btn-submit btn-save" onclick="return handleSubmit(event, 'wcc-staff-personal-info')" style="background:var(--green-dark,#1a3a2a);color:#fff;border:none;padding:12px 28px;border-radius:6px;font-size:0.88rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;" type="button"><svg style="width:16px;height:16px;fill:white" viewbox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg>Save &amp; Download PDF</button></div><div class="netlify-success" id="success-wcc-staff-personal-info" style="display:none;background:#d4edda;border:1px solid #c3e6cb;color:#155724;border-radius:8px;padding:16px 20px;margin-top:12px;font-weight:600;">✅ Submitted! Data sent to Wander Community Care. Click <strong>Save Signed PDF</strong> above to save your copy.</div>
@@ -492,7 +492,7 @@
 <input name="print_name_conduct_worker" placeholder="Full name" type="text"/>
 </div><div class="field-group">
 <label>Date</label>
-<input name="date_conduct_worker" type="date"/>
+<input name="date_conduct_worker" type="text" placeholder="DD/MM/YYYY" oninput="fmtDate(this)" maxlength="10"/>
 </div></div><div class="sig-party"><div class="sig-party-title">Management</div><div class="field-group">
 <label class="sig-label">Management Signature</label>
 <div class="sig-wrap">
@@ -503,10 +503,10 @@
 <input id="sig-data-conduct_mgmt" name="signature_conduct_mgmt" type="hidden"/>
 </div><div class="field-group">
 <label>Print Name</label>
-<input name="print_name_conduct_mgmt" placeholder="Full name" readonly="" style="background:#f0f7f4;color:#555" type="text"/>
+<input name="print_name_conduct_mgmt" placeholder="Full name" style="background:#f0f7f4;color:#555" type="text"/>
 </div><div class="field-group">
 <label>Date</label>
-<input name="date_conduct_mgmt" readonly="" style="background:#f0f7f4;color:#555" type="date"/>
+<input name="date_conduct_mgmt" style="background:#f0f7f4;color:#555" type="text" placeholder="DD/MM/YYYY" oninput="fmtDate(this)" maxlength="10"/>
 </div></div></div>
 </div>
 
@@ -617,7 +617,7 @@
 <input name="print_name_clear_worker" placeholder="Full name" type="text"/>
 </div><div class="field-group">
 <label>Date</label>
-<input name="date_clear_worker" type="date"/>
+<input name="date_clear_worker" type="text" placeholder="DD/MM/YYYY" oninput="fmtDate(this)" maxlength="10"/>
 </div></div><div class="sig-party"><div class="sig-party-title">Management</div><div class="field-group">
 <label class="sig-label">Management Signature</label>
 <div class="sig-wrap">
@@ -628,10 +628,10 @@
 <input id="sig-data-clear_mgmt" name="signature_clear_mgmt" type="hidden"/>
 </div><div class="field-group">
 <label>Print Name</label>
-<input name="print_name_clear_mgmt" placeholder="Full name" readonly="" style="background:#f0f7f4;color:#555" type="text"/>
+<input name="print_name_clear_mgmt" placeholder="Full name" style="background:#f0f7f4;color:#555" type="text"/>
 </div><div class="field-group">
 <label>Date</label>
-<input name="date_clear_mgmt" readonly="" style="background:#f0f7f4;color:#555" type="date"/>
+<input name="date_clear_mgmt" style="background:#f0f7f4;color:#555" type="text" placeholder="DD/MM/YYYY" oninput="fmtDate(this)" maxlength="10"/>
 </div></div></div>
 </div>
 
@@ -680,7 +680,7 @@
 <div class="section-heading">National Police Check</div>
 <div class="field-row">
 <div class="field-group"><label>Police Check Certificate Number</label><input name="police_check_certificate_number" type="text"/></div>
-<div class="field-group"><label>Date Issued</label><input name="date_issued" type="date"/></div>
+<div class="field-group"><label>Date Issued</label><input name="date_issued" type="text" placeholder="DD/MM/YYYY" oninput="fmtDate(this)" maxlength="10"/></div>
 </div>
 <div class="field-group">
 <label>Disclosable Court Outcomes</label>
@@ -698,7 +698,7 @@
 </div>
 <div class="field-row">
 <div class="field-group"><label>Referee 1 — Phone / Email</label><input name="referee_1_phone_email" type="text"/></div>
-<div class="field-group"><label>Date Checked</label><input name="date_checked" type="date"/></div>
+<div class="field-group"><label>Date Checked</label><input name="date_checked" type="text" placeholder="DD/MM/YYYY" oninput="fmtDate(this)" maxlength="10"/></div>
 </div>
 <div class="field-row">
 <div class="field-group"><label>Referee 2 — Name</label><input name="referee_2_name" type="text"/></div>
@@ -706,7 +706,7 @@
 </div>
 <div class="field-row">
 <div class="field-group"><label>Referee 2 — Phone / Email</label><input name="referee_2_phone_email" type="text"/></div>
-<div class="field-group"><label>Date Checked</label><input name="date_checked_2" type="date"/></div>
+<div class="field-group"><label>Date Checked</label><input name="date_checked_2" type="text" placeholder="DD/MM/YYYY" oninput="fmtDate(this)" maxlength="10"/></div>
 </div>
 <label class="confirm-check-item"><input name="referee_checks_completed_and_satisfactory" type="checkbox"/> Referee checks completed and satisfactory</label>
 <div class="section-heading">Working with Children Check (if applicable)</div>
@@ -730,36 +730,36 @@
 <td><strong>First Aid Certificate (HLTAID011)</strong></td>
 <td><input name="checkbox" type="checkbox"/></td>
 <td><input name="date" type="date"/></td>
-<td><input name="date_2" type="date"/></td>
+<td><input name="date_2" type="text" placeholder="DD/MM/YYYY" oninput="fmtDate(this)" maxlength="10"/></td>
 </tr>
 <tr>
 <td><strong>CPR (HLTAID009)</strong></td>
 <td><input name="checkbox_2" type="checkbox"/></td>
-<td><input name="date_3" type="date"/></td>
-<td><input name="date_4" type="date"/></td>
+<td><input name="date_3" type="text" placeholder="DD/MM/YYYY" oninput="fmtDate(this)" maxlength="10"/></td>
+<td><input name="date_4" type="text" placeholder="DD/MM/YYYY" oninput="fmtDate(this)" maxlength="10"/></td>
 </tr>
 <tr>
 <td><strong>NDIS Worker Orientation Module</strong> ("Quality, Safety and You")</td>
 <td><input name="checkbox_3" type="checkbox"/></td>
-<td><input name="date_5" type="date"/></td>
+<td><input name="date_5" type="text" placeholder="DD/MM/YYYY" oninput="fmtDate(this)" maxlength="10"/></td>
 <td style="text-align:center;color:var(--muted);font-size:.82rem">N/A</td>
 </tr>
 <tr>
 <td>Infection Control</td>
 <td><input name="checkbox_4" type="checkbox"/></td>
-<td><input name="date_6" type="date"/></td>
-<td><input name="date_7" type="date"/></td>
+<td><input name="date_6" type="text" placeholder="DD/MM/YYYY" oninput="fmtDate(this)" maxlength="10"/></td>
+<td><input name="date_7" type="text" placeholder="DD/MM/YYYY" oninput="fmtDate(this)" maxlength="10"/></td>
 </tr>
 <tr>
 <td>Manual Handling</td>
 <td><input name="checkbox_5" type="checkbox"/></td>
-<td><input name="date_8" type="date"/></td>
-<td><input name="date_9" type="date"/></td>
+<td><input name="date_8" type="text" placeholder="DD/MM/YYYY" oninput="fmtDate(this)" maxlength="10"/></td>
+<td><input name="date_9" type="text" placeholder="DD/MM/YYYY" oninput="fmtDate(this)" maxlength="10"/></td>
 </tr>
 <tr>
 <td>Fire Safety &amp; Emergency Procedures</td>
 <td><input name="checkbox_6" type="checkbox"/></td>
-<td><input name="date_10" type="date"/></td>
+<td><input name="date_10" type="text" placeholder="DD/MM/YYYY" oninput="fmtDate(this)" maxlength="10"/></td>
 <td style="text-align:center;color:var(--muted);font-size:.82rem">N/A</td>
 </tr>
 </table>
@@ -828,7 +828,7 @@
 <input name="print_name_emerg_worker" placeholder="Full name" type="text"/>
 </div><div class="field-group">
 <label>Date</label>
-<input name="date_emerg_worker" type="date"/>
+<input name="date_emerg_worker" type="text" placeholder="DD/MM/YYYY" oninput="fmtDate(this)" maxlength="10"/>
 </div></div><div class="sig-party"><div class="sig-party-title">Management</div><div class="field-group">
 <label class="sig-label">Management Signature</label>
 <div class="sig-wrap">
@@ -839,10 +839,10 @@
 <input id="sig-data-emerg_mgmt" name="signature_emerg_mgmt" type="hidden"/>
 </div><div class="field-group">
 <label>Print Name</label>
-<input name="print_name_emerg_mgmt" placeholder="Full name" readonly="" style="background:#f0f7f4;color:#555" type="text"/>
+<input name="print_name_emerg_mgmt" placeholder="Full name" style="background:#f0f7f4;color:#555" type="text"/>
 </div><div class="field-group">
 <label>Date</label>
-<input name="date_emerg_mgmt" readonly="" style="background:#f0f7f4;color:#555" type="date"/>
+<input name="date_emerg_mgmt" style="background:#f0f7f4;color:#555" type="text" placeholder="DD/MM/YYYY" oninput="fmtDate(this)" maxlength="10"/>
 </div></div></div>
 </div>
 
@@ -941,7 +941,7 @@
 <input name="print_name_staff_worker" placeholder="Full name" type="text"/>
 </div><div class="field-group">
 <label>Date</label>
-<input name="date_staff_worker" type="date"/>
+<input name="date_staff_worker" type="text" placeholder="DD/MM/YYYY" oninput="fmtDate(this)" maxlength="10"/>
 </div></div><div class="sig-party"><div class="sig-party-title">Management</div><div class="field-group">
 <label class="sig-label">Management Signature</label>
 <div class="sig-wrap">
@@ -952,10 +952,10 @@
 <input id="sig-data-staff_mgmt" name="signature_staff_mgmt" type="hidden"/>
 </div><div class="field-group">
 <label>Print Name</label>
-<input name="print_name_staff_mgmt" placeholder="Full name" readonly="" style="background:#f0f7f4;color:#555" type="text"/>
+<input name="print_name_staff_mgmt" placeholder="Full name" style="background:#f0f7f4;color:#555" type="text"/>
 </div><div class="field-group">
 <label>Date</label>
-<input name="date_staff_mgmt" readonly="" style="background:#f0f7f4;color:#555" type="date"/>
+<input name="date_staff_mgmt" style="background:#f0f7f4;color:#555" type="text" placeholder="DD/MM/YYYY" oninput="fmtDate(this)" maxlength="10"/>
 </div></div></div>
 </div>
 <div class="btn-submit-row" style="margin-top:24px;padding:16px 20px;background:var(--green-pale,#f0f7f4);border-radius:8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;"><p style="font-size:0.82rem;color:#555;margin:0;max-width:400px;">Fill in all fields, sign below, then click <strong>Save &amp; Download PDF</strong>. You can save a PDF copy after submitting.</p><button class="btn-submit btn-save" onclick="return handleSubmit(event, 'wcc-staff-emergency-medical')" style="background:var(--green-dark,#1a3a2a);color:#fff;border:none;padding:12px 28px;border-radius:6px;font-size:0.88rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;" type="button"><svg style="width:16px;height:16px;fill:white" viewbox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"></path></svg>Save &amp; Download PDF</button></div><div class="netlify-success" id="success-wcc-staff-emergency-medical" style="display:none;background:#d4edda;border:1px solid #c3e6cb;color:#155724;border-radius:8px;padding:16px 20px;margin-top:12px;font-weight:600;">✅ Submitted! Data sent to Wander Community Care. Click <strong>Save Signed PDF</strong> above to save your copy.</div>
@@ -1001,8 +1001,20 @@ function flushSig(id) {
   var hidden = document.getElementById('sig-data-' + id);
   if (hidden) hidden.value = dataUrl;
   var img = document.getElementById('sig-img-' + id);
-  if (img) { img.src = dataUrl; img.style.display = 'block'; }
+  if (img) {
+    img.src = dataUrl;
+    img.style.display = 'block';
+    img.style.visibility = 'visible';
+    img.style.opacity = '1';
+  }
 }
+function fmtDate(el) {
+  var v = el.value.replace(/[^0-9]/g, '');
+  if (v.length >= 3 && v.length <= 4) v = v.slice(0,2) + '/' + v.slice(2);
+  else if (v.length >= 5) v = v.slice(0,2) + '/' + v.slice(2,4) + '/' + v.slice(4,8);
+  el.value = v;
+}
+
 function clearSig(id) {
   var canvas = document.getElementById('sig-' + id);
   if (!canvas) return;
@@ -1188,6 +1200,8 @@ async function captureFormAsPDF(formEl, formTitle, formName) {
   // ── 3. Screenshot the full form ───────────────────────────────────────────
   var canvas;
   try {
+    void formBody.offsetHeight;
+    await new Promise(function(resolve) { requestAnimationFrame(function() { requestAnimationFrame(resolve); }); });
     canvas = await html2canvas(formBody, {
       scale: 2,
       useCORS: true,
