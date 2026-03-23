@@ -847,9 +847,22 @@ function showTab(name) {
   document.querySelectorAll('.form-section').forEach(function(s){ s.classList.remove('active'); });
   document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
   var target = document.getElementById('tab-' + name);
-  if (target) target.classList.add('active');
+  if (target) {
+    target.classList.add('active');
+    // Re-initialise sig canvases now that the tab is visible — getBoundingClientRect
+    // returns 0 for hidden elements so we must init AFTER making the tab active
+    target.querySelectorAll('.sig-canvas').forEach(function(c) {
+      initSig(c.id.replace('sig-', ''));
+    });
+  }
   if (event && event.currentTarget) event.currentTarget.classList.add('active');
   window.scrollTo({top: 0, behavior: 'smooth'});
+  // Re-init sig canvases on this tab now that it's visible and has real dimensions
+  if (target) {
+    target.querySelectorAll('.sig-canvas').forEach(function(c) {
+      initSig(c.id.replace('sig-', ''));
+    });
+  }
 }
 
 // ── Form titles ───────────────────────────────────────────────────────────────
@@ -967,11 +980,39 @@ function getFieldValue(input) {
 async function captureFormAsPDF(formEl, formTitle, formName) {
   var formBody = formEl; // screenshot the full section so signatures (outside .form-body) are included
 
-  // ── 1. Hide UI elements, show sig images ─────────────────────────────────
+  // ── 1. Flush all sigs to img elements, hide canvases, show images ──────────
+  // Re-flush every sig canvas NOW (inside captureFormAsPDF) so the img.src is
+  // always current — not relying on flushSig having been called before.
+  formEl.querySelectorAll('.sig-canvas').forEach(function(c) {
+    var id = c.id.replace('sig-', '');
+    var dataUrl = c.toDataURL();
+    var hidden = document.getElementById('sig-data-' + id);
+    if (hidden) hidden.value = dataUrl;
+    var img = document.getElementById('sig-img-' + id);
+    if (img) {
+      img.src = dataUrl;
+      img.style.display = 'block';
+      img.style.visibility = 'visible';
+      img.style.opacity = '1';
+    }
+  });
+
   var hideEls = formEl.querySelectorAll('.btn-submit-row, .netlify-success, .sig-clear');
   hideEls.forEach(function(el) { el.dataset.oh = el.style.display; el.style.display = 'none'; });
   formEl.querySelectorAll('.sig-canvas').forEach(function(c) { c.dataset.ov = c.style.display; c.style.display = 'none'; });
-  formEl.querySelectorAll('.sig-data-img').forEach(function(img) { img.dataset.ov = img.style.display; img.style.display = 'block'; });
+
+  // Wait for ALL sig images to finish decoding before we measure or screenshot
+  var sigImgs = Array.from(formEl.querySelectorAll('.sig-data-img'));
+  await Promise.all(sigImgs.map(function(img) {
+    if (!img.src || img.src === window.location.href) return Promise.resolve();
+    if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+    return new Promise(function(resolve) {
+      img.onload  = resolve;
+      img.onerror = resolve;
+      // Safety timeout — never block forever
+      setTimeout(resolve, 500);
+    });
+  }));
 
   // ── 2. Hide placeholder text and unselected dropdowns ───────────────────────
   // Placeholder text shows when a field has no value. The guaranteed way to
@@ -997,12 +1038,33 @@ async function captureFormAsPDF(formEl, formTitle, formName) {
     }
   });
 
-  // ── 3. Screenshot the full form ───────────────────────────────────────────
+  // ── 3. Measure element break points using offsetTop (scroll-independent) ──
+  // Walk every descendant element and record its bottom edge relative to
+  // formBody's own top. offsetTop is stable regardless of scroll position.
+  // We collect UNIQUE bottom-edge values — these are the only safe cut points.
+  function getOffsetTop(el, ancestor) {
+    var top = 0;
+    while (el && el !== ancestor) { top += el.offsetTop; el = el.offsetParent; }
+    return top;
+  }
+  var breakSet = {};
+  var allEls = formBody.querySelectorAll('*');
+  for (var ei = 0; ei < allEls.length; ei++) {
+    var el = allEls[ei];
+    var bottom = getOffsetTop(el, formBody) + el.offsetHeight;
+    if (bottom > 0) breakSet[Math.round(bottom)] = true;
+  }
+  // Also add 0 and total height
+  breakSet[0] = true;
+  var totalCssPx = formBody.scrollHeight;
+  breakSet[totalCssPx] = true;
+  // Sort break points
+  var breakPoints = Object.keys(breakSet).map(Number).sort(function(a,b){return a-b;});
+
+  // ── 4. Screenshot ─────────────────────────────────────────────────────────
   var canvas;
   try {
-    // Force reflow so sig-img elements are visible before html2canvas reads the DOM
     void formBody.offsetHeight;
-    // Wait one animation frame to ensure images are painted
     await new Promise(function(resolve) { requestAnimationFrame(function() { requestAnimationFrame(resolve); }); });
 
     canvas = await html2canvas(formBody, {
@@ -1020,55 +1082,84 @@ async function captureFormAsPDF(formEl, formTitle, formName) {
   } finally {
     hideEls.forEach(function(el) { el.style.display = el.dataset.oh || ''; });
     formEl.querySelectorAll('.sig-canvas').forEach(function(c) { c.style.display = c.dataset.ov || ''; });
-    formEl.querySelectorAll('.sig-data-img').forEach(function(img) { img.style.display = img.dataset.ov || ''; });
-    // Restore empty inputs (remove the zero-width space)
+    formEl.querySelectorAll('.sig-data-img').forEach(function(img) {
+      img.style.display    = img.dataset.ov || '';
+      img.style.visibility = '';
+      img.style.opacity    = '';
+    });
     emptyInputs.forEach(function(el) { el.value = ''; });
-    // Restore select option text
     selBackup.forEach(function(item) { item.opt.text = item.text; });
   }
   if (!canvas) return null;
 
-  // ── 4. Multi-page PDF — canvas slice approach ────────────────────────────
-  // Each page gets its own CROPPED canvas image. No overlap, no clipping
-  // artifacts — every pixel appears exactly once across all pages.
+  // ── 5. Build pages — always cut between elements, never through them ──────
   var jsPDFLib = window.jspdf ? window.jspdf.jsPDF : window.jsPDF;
   if (!jsPDFLib) { console.error('jsPDF not loaded'); return null; }
 
-  var pdf      = new jsPDFLib('p', 'mm', 'a4');
-  var margin   = 8;            // mm on all sides
-  var printW   = 210 - 2 * margin;  // 194 mm usable width
-  var printH   = 297 - 2 * margin;  // 281 mm usable height per page
+  var pdf     = new jsPDFLib('p', 'mm', 'a4');
+  var margin  = 8;
+  var printW  = 210 - 2 * margin;   // 194 mm
+  var printH  = 297 - 2 * margin;   // 281 mm
 
-  // How many canvas pixels equal 1 mm of print width?
-  var pxPerMm  = canvas.width / printW;
+  // Scale: canvas pixels per CSS pixel
+  var cssToCx = canvas.width / formBody.scrollWidth;
+  // Scale: canvas pixels per mm
+  var pxPerMm = canvas.width / printW;
+  // One page in canvas pixels
+  var pageHpx = printH * pxPerMm;
 
-  // How many canvas pixels tall is one printed page?
-  var pageHpx  = Math.round(printH * pxPerMm);
+  // Build page slices: for each page find the largest break point
+  // that fits within one page height, and cut there.
+  var pages = [];   // [{startCss, endCss}]
+  var curStart = 0;
 
-  var totalPages = Math.ceil(canvas.height / pageHpx);
+  while (curStart < totalCssPx) {
+    var idealEndCss = curStart + (pageHpx / cssToCx);
 
-  for (var p = 0; p < totalPages; p++) {
-    if (p > 0) pdf.addPage();
+    if (idealEndCss >= totalCssPx) {
+      pages.push({ start: curStart, end: totalCssPx });
+      break;
+    }
 
-    var srcY  = p * pageHpx;
-    var srcH  = Math.min(pageHpx, canvas.height - srcY);  // last page may be shorter
-    if (srcH <= 0) break;
+    // Find the largest break point that is <= idealEnd and > curStart
+    var bestBreak = -1;
+    for (var bi = 0; bi < breakPoints.length; bi++) {
+      var bp = breakPoints[bi];
+      if (bp > curStart && bp <= idealEndCss) bestBreak = bp;
+    }
 
-    // Crop exactly this page's pixels from the full canvas
+    if (bestBreak === -1 || bestBreak === curStart) {
+      // No element fits — hard cut (single element taller than one page)
+      bestBreak = Math.round(idealEndCss);
+    }
+
+    pages.push({ start: curStart, end: bestBreak });
+    curStart = bestBreak;
+  }
+
+  // ── 6. Render each page ───────────────────────────────────────────────────
+  pages.forEach(function(pg, idx) {
+    if (idx > 0) pdf.addPage();
+
+    var srcY = Math.round(pg.start * cssToCx);
+    var srcH = Math.round((pg.end - pg.start) * cssToCx);
+    srcH = Math.min(srcH, canvas.height - srcY);
+    if (srcH <= 0) return;
+
     var slice    = document.createElement('canvas');
     slice.width  = canvas.width;
     slice.height = srcH;
     slice.getContext('2d').drawImage(
       canvas,
-      0, srcY, canvas.width, srcH,   // source rectangle
-      0, 0,    canvas.width, srcH    // destination rectangle
+      0, srcY, canvas.width, srcH,
+      0, 0,    canvas.width, srcH
     );
 
-    var sliceData = slice.toDataURL('image/jpeg', 0.93);
-    var sliceHmm  = srcH / pxPerMm;   // height in mm (proportional, <= printH)
+    var imgData  = slice.toDataURL('image/jpeg', 0.93);
+    var imgHmm   = srcH / pxPerMm;
 
-    pdf.addImage(sliceData, 'JPEG', margin, margin, printW, sliceHmm);
-  }
+    pdf.addImage(imgData, 'JPEG', margin, margin, printW, imgHmm);
+  });
 
   return pdf;
 }
