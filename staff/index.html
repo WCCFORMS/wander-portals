@@ -662,20 +662,7 @@
 <div class="callout-orange" style="margin-top:12px">
 <strong>Important:</strong> Notify management immediately if your clearance is suspended, cancelled, expires, or if you are charged with any relevant offence.
     </div>
-<div class="section-heading">National Police Check</div>
-<div class="field-row">
-<div class="field-group"><label>Police Check Certificate Number</label><input name="police_check_certificate_number" type="text"/></div>
-<div class="field-group"><label>Date Issued</label><input name="date_issued" type="text" placeholder="DD/MM/YYYY" oninput="fmtDate(this)" maxlength="10"/></div>
-</div>
-<div class="field-group">
-<label>Disclosable Court Outcomes</label>
-<div class="radio-row">
-<label><input name="police" type="radio"/> No Disclosable Court Outcomes</label>
-<label><input name="police_2" type="radio"/> Disclosures present (details provided separately)</label>
-</div>
-</div>
-<label class="confirm-check-item"><input name="police_check_has_been_sighted_and_verified_by_mana" type="checkbox"/> Police check has been sighted and verified by management</label>
-<p style="font-size:.82rem;color:var(--muted);margin-top:8px">Police checks must be renewed every 3 years.</p>
+
 <div class="section-heading">Referee Checks</div>
 <div class="field-row">
 <div class="field-group"><label>Referee 1 — Name</label><input name="referee_1_name" type="text"/></div>
@@ -1232,27 +1219,32 @@ async function captureFormAsPDF(formEl, formTitle, formName) {
     }
   });
 
-  // ── 3. Measure element break points using offsetTop (scroll-independent) ──
-  // Walk every descendant element and record its bottom edge relative to
-  // formBody's own top. offsetTop is stable regardless of scroll position.
-  // We collect UNIQUE bottom-edge values — these are the only safe cut points.
+  // ── 3. Measure break points — section-level only for clean page cuts ────────
   function getOffsetTop(el, ancestor) {
     var top = 0;
     while (el && el !== ancestor) { top += el.offsetTop; el = el.offsetParent; }
     return top;
   }
   var breakSet = {};
-  var allEls = formBody.querySelectorAll('*');
-  for (var ei = 0; ei < allEls.length; ei++) {
-    var el = allEls[ei];
-    var bottom = getOffsetTop(el, formBody) + el.offsetHeight;
+  var SAFE_SELECTORS = [
+    '.field-group', '.field-row', '.field-row-3',
+    '.section-heading', '.callout-blue', '.callout-orange',
+    '.policy-box', '.confirm-checks', '.confirm-check-item',
+    '.sig-grid', '.sig-grid-inputs', '.sig-party',
+    '.form-body > *', '.form-card > *', '.rate-display'
+  ].join(',');
+  var safeEls = formBody.querySelectorAll(SAFE_SELECTORS);
+  for (var ei = 0; ei < safeEls.length; ei++) {
+    var el = safeEls[ei];
+    if (el.offsetHeight < 4) continue;
+    var top    = getOffsetTop(el, formBody);
+    var bottom = top + el.offsetHeight;
+    if (top > 0)    breakSet[Math.round(top)]    = true;
     if (bottom > 0) breakSet[Math.round(bottom)] = true;
   }
-  // Also add 0 and total height
   breakSet[0] = true;
   var totalCssPx = formBody.scrollHeight;
   breakSet[totalCssPx] = true;
-  // Sort break points
   var breakPoints = Object.keys(breakSet).map(Number).sort(function(a,b){return a-b;});
 
   // ── 4. Screenshot ─────────────────────────────────────────────────────────
