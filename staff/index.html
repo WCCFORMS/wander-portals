@@ -943,15 +943,53 @@
 function initSig(id) {
   var canvas = document.getElementById('sig-' + id);
   if (!canvas) return;
-  var dpr = window.devicePixelRatio || 1;
+  var dpr  = window.devicePixelRatio || 1;
   var rect = canvas.getBoundingClientRect();
-  canvas.width  = rect.width  * dpr;
-  canvas.height = 140 * dpr;
+  var newW = rect.width  * dpr;
+  var newH = 140 * dpr;
+
+  // ── Preserve existing signature across resize ─────────────────────────────
+  // Setting canvas.width or canvas.height always clears the canvas.
+  // Save the current pixel data as a dataURL, resize, then redraw it.
+  var existingData = null;
+  var hidden = document.getElementById('sig-data-' + id);
+  if (hidden && hidden.value && hidden.value.length > 100) {
+    // Use the stored dataURL — more reliable than reading canvas directly
+    existingData = hidden.value;
+  } else if (canvas.width > 0 && canvas.height > 0) {
+    // Fall back to reading the canvas if no hidden value yet
+    var snap = canvas.toDataURL();
+    var blank = document.createElement('canvas');
+    blank.width = canvas.width; blank.height = canvas.height;
+    if (snap !== blank.toDataURL()) existingData = snap;
+  }
+
+  // Only resize if dimensions actually changed (avoids unnecessary wipe)
+  if (canvas.width !== newW || canvas.height !== newH) {
+    canvas.width  = newW;
+    canvas.height = newH;
+  }
+
   var ctx = canvas.getContext('2d');
   ctx.scale(dpr, dpr);
   ctx.strokeStyle = '#1a3a2a';
   ctx.lineWidth = 2;
   ctx.lineCap = 'round';
+
+  // Restore signature if we had one
+  if (existingData) {
+    var img = new Image();
+    img.onload = function() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, rect.width, 140);
+    };
+    img.src = existingData;
+  }
+
+  // Avoid attaching duplicate event listeners
+  if (canvas.dataset.sigInit === '1') return;
+  canvas.dataset.sigInit = '1';
+
   var drawing = false;
   function getPos(e) {
     var r = canvas.getBoundingClientRect();
@@ -1440,6 +1478,187 @@ async function savePdfAgain(event, formName, formTitle) {
   } catch(e) { console.error(e); }
   if (btn) { btn.disabled = false; btn.innerHTML = '<svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:white;vertical-align:middle;margin-right:6px"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg> Save PDF Again'; }
 }
+
+</script>
+
+<script>
+
+// ── STAFF PORTAL AUTO-POPULATION SYNC ────────────────────────────────────────
+
+(function() {
+
+  // Worker name: from form1 first_name + last_name → all print_name_*_worker fields
+  // Also staff_member_name (form4 + form5) and full_name on form5
+
+  var TEXT_SYNC_GROUPS = [
+    // Worker print name across all forms
+    ['print_name_emp_worker','print_name_conduct_worker','print_name_clear_worker',
+     'print_name_emerg_worker','print_name_staff_worker'],
+
+    // Employer/manager print name across all forms
+    ['print_name_emp_employer','print_name_conduct_mgmt','print_name_clear_mgmt',
+     'print_name_emerg_mgmt','print_name_staff_mgmt'],
+
+    // Worker date across all forms
+    ['date_emp_worker','date_conduct_worker','date_clear_worker',
+     'date_emerg_worker','date_staff_worker'],
+
+    // Employer date across all forms
+    ['date_emp_employer','date_conduct_mgmt','date_clear_mgmt',
+     'date_emerg_mgmt','date_staff_mgmt'],
+
+    // Staff member name (form4 + form5 use different field name)
+    ['staff_member_name'],
+
+    // Phone number
+    ['mobile_phone_'],
+  ];
+
+  var SIG_SYNC_GROUPS = [
+    // Worker sigs across all forms
+    ['sig-emp_worker','sig-conduct_worker','sig-clear_worker',
+     'sig-emerg_worker','sig-staff_worker'],
+    // Employer/manager sigs
+    ['sig-emp_employer','sig-conduct_mgmt','sig-clear_mgmt',
+     'sig-emerg_mgmt','sig-staff_mgmt'],
+  ];
+
+  var fieldToGroup = {};
+  TEXT_SYNC_GROUPS.forEach(function(group, gi) {
+    group.forEach(function(name) { fieldToGroup[name] = gi; });
+  });
+  var sigToGroup = {};
+  SIG_SYNC_GROUPS.forEach(function(group, gi) {
+    group.forEach(function(id) { sigToGroup[id] = gi; });
+  });
+
+  var _syncing = false;
+  function propagateText(sourceField) {
+    if (_syncing) return;
+    var gi = fieldToGroup[sourceField.name];
+    if (gi === undefined) return;
+    _syncing = true;
+    var value = sourceField.value;
+    TEXT_SYNC_GROUPS[gi].forEach(function(fname) {
+      if (fname === sourceField.name) return;
+      document.querySelectorAll('[name="' + fname + '"]').forEach(function(t) {
+        if (t.value !== value) t.value = value;
+      });
+    });
+    _syncing = false;
+  }
+
+  function propagateSig(sourceCanvasId, dataUrl) {
+    var gi = sigToGroup[sourceCanvasId];
+    if (gi === undefined) return;
+    SIG_SYNC_GROUPS[gi].forEach(function(cid) {
+      if (cid === sourceCanvasId) return;
+      var canvas = document.getElementById(cid);
+      if (!canvas) return;
+      var img = new Image();
+      img.onload = function() {
+        var ctx = canvas.getContext('2d');
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.drawImage(img,0,0,canvas.width,canvas.height);
+        flushSig(cid.replace('sig-',''));
+      };
+      img.src = dataUrl;
+    });
+  }
+
+  // Auto-fill today's date into all empty worker/employer date fields
+  function autoFillDates() {
+    var now = new Date();
+    var today = String(now.getDate()).padStart(2,'0') + '/' +
+                String(now.getMonth()+1).padStart(2,'0') + '/' + now.getFullYear();
+    var dateNames = [
+      'date_emp_worker','date_conduct_worker','date_clear_worker',
+      'date_emerg_worker','date_staff_worker',
+      'date_emp_employer','date_conduct_mgmt','date_clear_mgmt',
+      'date_emerg_mgmt','date_staff_mgmt',
+    ];
+    dateNames.forEach(function(name) {
+      document.querySelectorAll('[name="' + name + '"]').forEach(function(el) {
+        if (!el.value) el.value = today;
+      });
+    });
+  }
+
+  // Special: when first_name or last_name changes, build full name and sync
+  function syncWorkerName() {
+    var fn = document.querySelector('[name="first_name"]');
+    var ln = document.querySelector('[name="last_name"]');
+    if (!fn || !ln) return;
+    var full = (fn.value + ' ' + ln.value).trim();
+    if (!full) return;
+    // Set all print_name_*_worker fields
+    ['print_name_emp_worker','print_name_conduct_worker','print_name_clear_worker',
+     'print_name_emerg_worker','print_name_staff_worker','staff_member_name'].forEach(function(name) {
+      document.querySelectorAll('[name="' + name + '"]').forEach(function(el) {
+        if (!el.value || el.value === full.split(' ')[0]) el.value = full;
+      });
+    });
+  }
+
+  // Patch flushSig
+  var _origFlushSig = window.flushSig;
+  window.flushSig = function(id) {
+    if (_origFlushSig) _origFlushSig(id);
+    var canvas = document.getElementById('sig-' + id);
+    if (!canvas) return;
+    var dataUrl = canvas.toDataURL();
+    var blank = document.createElement('canvas');
+    blank.width = canvas.width; blank.height = canvas.height;
+    if (dataUrl !== blank.toDataURL()) {
+      propagateSig('sig-' + id, dataUrl);
+      showSigBanner();
+    }
+  };
+
+  var sigBannerShown = false;
+  function showSigBanner() {
+    if (sigBannerShown) return;
+    sigBannerShown = true;
+    var banner = document.createElement('div');
+    banner.style.cssText = 'position:fixed;bottom:72px;left:50%;transform:translateX(-50%);'
+      + 'background:#1a3a2a;color:#fff;padding:10px 20px;border-radius:8px;'
+      + 'font-size:13px;font-weight:600;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.3);'
+      + 'opacity:0;transition:opacity .4s;pointer-events:none;white-space:nowrap;';
+    banner.textContent = '✅ Signature copied to all forms automatically';
+    document.body.appendChild(banner);
+    requestAnimationFrame(function() {
+      banner.style.opacity = '1';
+      setTimeout(function() {
+        banner.style.opacity = '0';
+        setTimeout(function() { banner.remove(); }, 400);
+      }, 3000);
+    });
+  }
+
+  var _origShowTab = window.showTab;
+  window.showTab = function(name) {
+    if (_origShowTab) _origShowTab(name);
+    // Re-sync name when switching tabs
+    syncWorkerName();
+  };
+
+  document.addEventListener('input', function(e) {
+    var el = e.target;
+    if (!el.name) return;
+    if (fieldToGroup[el.name] !== undefined) propagateText(el);
+    if (el.name === 'first_name' || el.name === 'last_name') syncWorkerName();
+  });
+  document.addEventListener('change', function(e) {
+    var el = e.target;
+    if (!el.name) return;
+    if (fieldToGroup[el.name] !== undefined) propagateText(el);
+  });
+
+  window.addEventListener('load', function() {
+    autoFillDates();
+  });
+
+})();
 
 </script>
 </body>
