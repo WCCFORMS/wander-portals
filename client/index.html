@@ -93,6 +93,16 @@ body{font-family:'Source Sans 3',sans-serif;background:var(--green-ultra-pale);c
 .btn-save{background:var(--green-dark);color:white;border:none;padding:12px 28px;border-radius:6px;font-family:'Source Sans 3',sans-serif;font-size:0.88rem;font-weight:700;cursor:pointer;letter-spacing:0.04em;display:flex;align-items:center;gap:8px;transition:background 0.2s}
 .btn-save:hover{background:var(--green-light)}
 .btn-save svg{width:16px;height:16px;fill:white}
+/* Prevent content cut-off in PDF capture */
+.field-group, .policy-box, .callout-blue, .callout-orange,
+.sig-party, .confirm-check-item, .section-heading + * {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+.section-heading {
+  break-after: avoid;
+  page-break-after: avoid;
+}
 
 @media print{
   .portal-header{position:static}
@@ -121,7 +131,16 @@ body{font-family:'Source Sans 3',sans-serif;background:var(--green-ultra-pale);c
 .sig-clear{position:absolute;top:8px;right:8px;background:transparent;border:1px solid #aaa;border-radius:4px;font-size:0.75rem;padding:3px 10px;cursor:pointer;color:#666;}
 .sig-clear:hover{background:#f0f0f0;}
 .netlify-success{background:#d4edda;border:1px solid #c3e6cb;color:#155724;border-radius:8px;padding:16px 20px;margin-top:16px;font-weight:600;}
-@media print{.sig-block{page-break-inside:avoid;}.sig-canvas{border:1px solid #ccc!important;}}
+@media print{
+  .sig-block{page-break-inside:avoid;}
+  .sig-canvas{border:1px solid #ccc!important;}
+  .field-group{page-break-inside:avoid;}
+  .policy-box{page-break-inside:avoid;}
+  .sig-grid,.sig-grid-inputs,.sig-party{page-break-inside:avoid;}
+  .confirm-check-item{page-break-inside:avoid;}
+  .callout-blue,.callout-orange{page-break-inside:avoid;}
+  .section-heading{page-break-after:avoid;}
+}
 
 
 @media print {
@@ -232,10 +251,10 @@ body{font-family:'Source Sans 3',sans-serif;background:var(--green-ultra-pale);c
 <div class="field-row"><div class="field-group"><label>Preferred days of support</label><input name="preferred_days_of_support" type="text"/></div><div class="field-group"><label>Hours per session (approx.)</label><input name="hours_per_session_approx" type="text"/></div></div>
 <div class="field-row"><div class="field-group"><label>Total hours per week (approx.)</label><input name="total_hours_per_week_approx" type="text"/></div><div class="field-group"><label>Main location(s) for support</label><input name="main_locations_for_support" type="text"/></div></div>
 <div class="section-heading">Part E — Health &amp; Safety</div>
-<div class="field-group"><label>Known health conditions</label><textarea name="known_health_conditions" placeholder="Physical, mental, sensory, intellectual conditions"></textarea></div>
-<div class="field-group"><label>Medications</label><textarea name="medications" placeholder="Medications, dosages, times, special instructions"></textarea></div>
-<div class="field-row"><div class="field-group"><label>Allergies</label><input name="allergies" placeholder="Food, medication, environmental" type="text"/></div><div class="field-group"><label>GP Name &amp; Contact</label><input name="gp_name_contact" type="text"/></div></div>
-<div class="field-group"><label>Communication needs</label><textarea name="communication_needs" placeholder="How does the participant communicate? Any aids, devices, or preferences?"></textarea></div>
+<div class="callout-blue" style="margin-bottom:0">
+  <strong>Health &amp; Safety information is recorded separately.</strong><br>
+  Please complete the <em>Personal Support &amp; Safety Planning</em> document which captures health conditions, medications, allergies, communication needs, risk factors and safety strategies in full detail. This keeps all clinical information in one place for your support workers to reference.
+</div>
 <div class="section-heading">Part F — Pricing (NDIS Price Guide 2025–26)</div>
 <div class="callout-blue"><strong>NDIS Protocol — Pricing:</strong> All rates are the maximum price limits set by the NDIS. Wander Community Care charges at or below these rates.</div>
 <table class="pricing-tbl">
@@ -1038,23 +1057,35 @@ async function captureFormAsPDF(formEl, formTitle, formName) {
     }
   });
 
-  // ── 3. Measure element break points using offsetTop (scroll-independent) ──
-  // Walk every descendant element and record its bottom edge relative to
-  // formBody's own top. offsetTop is stable regardless of scroll position.
-  // We collect UNIQUE bottom-edge values — these are the only safe cut points.
+  // ── 3. Measure break points — section-level only for clean page cuts ────────
+  // Only measure meaningful block elements, not every inline/text node.
+  // This ensures page cuts happen between sections, not inside them.
   function getOffsetTop(el, ancestor) {
     var top = 0;
     while (el && el !== ancestor) { top += el.offsetTop; el = el.offsetParent; }
     return top;
   }
   var breakSet = {};
-  var allEls = formBody.querySelectorAll('*');
-  for (var ei = 0; ei < allEls.length; ei++) {
-    var el = allEls[ei];
-    var bottom = getOffsetTop(el, formBody) + el.offsetHeight;
+  // Only use section-level selectors as valid cut points
+  var SAFE_SELECTORS = [
+    '.field-group', '.field-row', '.field-row-3',
+    '.section-heading', '.callout-blue', '.callout-orange',
+    '.policy-box', '.confirm-checks', '.confirm-check-item',
+    '.sig-grid', '.sig-grid-inputs', '.sig-party',
+    '.overnight-section', '.pricing-tbl', 'tr',
+    '.form-body > *', '.form-card > *'
+  ].join(',');
+  var safeEls = formBody.querySelectorAll(SAFE_SELECTORS);
+  for (var ei = 0; ei < safeEls.length; ei++) {
+    var el = safeEls[ei];
+    // Skip elements with no height (hidden, empty)
+    if (el.offsetHeight < 4) continue;
+    var top    = getOffsetTop(el, formBody);
+    var bottom = top + el.offsetHeight;
+    // Add both top (before element) and bottom (after element) as valid break points
+    if (top > 0)    breakSet[Math.round(top)]    = true;
     if (bottom > 0) breakSet[Math.round(bottom)] = true;
   }
-  // Also add 0 and total height
   breakSet[0] = true;
   var totalCssPx = formBody.scrollHeight;
   breakSet[totalCssPx] = true;
