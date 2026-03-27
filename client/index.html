@@ -802,15 +802,53 @@ body{font-family:'Source Sans 3',sans-serif;background:var(--green-ultra-pale);c
 function initSig(id) {
   var canvas = document.getElementById('sig-' + id);
   if (!canvas) return;
-  var dpr = window.devicePixelRatio || 1;
+  var dpr  = window.devicePixelRatio || 1;
   var rect = canvas.getBoundingClientRect();
-  canvas.width  = rect.width  * dpr;
-  canvas.height = 140 * dpr;
+  var newW = rect.width  * dpr;
+  var newH = 140 * dpr;
+
+  // ── Preserve existing signature across resize ─────────────────────────────
+  // Setting canvas.width or canvas.height always clears the canvas.
+  // Save the current pixel data as a dataURL, resize, then redraw it.
+  var existingData = null;
+  var hidden = document.getElementById('sig-data-' + id);
+  if (hidden && hidden.value && hidden.value.length > 100) {
+    // Use the stored dataURL — more reliable than reading canvas directly
+    existingData = hidden.value;
+  } else if (canvas.width > 0 && canvas.height > 0) {
+    // Fall back to reading the canvas if no hidden value yet
+    var snap = canvas.toDataURL();
+    var blank = document.createElement('canvas');
+    blank.width = canvas.width; blank.height = canvas.height;
+    if (snap !== blank.toDataURL()) existingData = snap;
+  }
+
+  // Only resize if dimensions actually changed (avoids unnecessary wipe)
+  if (canvas.width !== newW || canvas.height !== newH) {
+    canvas.width  = newW;
+    canvas.height = newH;
+  }
+
   var ctx = canvas.getContext('2d');
   ctx.scale(dpr, dpr);
   ctx.strokeStyle = '#1a3a2a';
   ctx.lineWidth = 2;
   ctx.lineCap = 'round';
+
+  // Restore signature if we had one
+  if (existingData) {
+    var img = new Image();
+    img.onload = function() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, rect.width, 140);
+    };
+    img.src = existingData;
+  }
+
+  // Avoid attaching duplicate event listeners
+  if (canvas.dataset.sigInit === '1') return;
+  canvas.dataset.sigInit = '1';
+
   var drawing = false;
   function getPos(e) {
     var r = canvas.getBoundingClientRect();
@@ -1331,5 +1369,226 @@ function calcGrandTotal() {
 }
 </script>
 
+
+<script>
+
+// ── AUTO-POPULATION SYNC ─────────────────────────────────────────────────────
+// When a field is filled in on any tab, sync it to matching fields on all tabs.
+// Signatures sync via canvas → dataURL copy.
+
+(function() {
+
+  // ── 1. Field sync groups ───────────────────────────────────────────────────
+  // Each group: when any field in the list changes, copy its value to all others.
+  var TEXT_SYNC_GROUPS = [
+    // Client name: intake full_name → client_name on all other tabs
+    ['full_name', 'client_name'],
+
+    // NDIS number across tabs
+    ['ndis_number'],
+
+    // Date of birth
+    ['date_of_birth'],
+
+    // Client print name — all tabs
+    ['print_name_intake_client','print_name_consent_client','print_name_rights_client',
+     'print_name_support_client','print_name_bsp_client','print_name_overnight_client'],
+
+    // WCC print name — all tabs (Boaz fills these in)
+    ['print_name_intake_wcc','print_name_consent_wcc','print_name_rights_wcc',
+     'print_name_support_wcc','print_name_bsp_wcc','print_name_overnight_wcc',
+     'print_name_rp_mgmt'],
+
+    // Client date — all tabs
+    ['date_intake_client','date_consent_client','date_rights_client',
+     'date_support_client','date_bsp_client','date_overnight_client'],
+
+    // WCC date — all tabs
+    ['date_intake_wcc','date_consent_wcc','date_rights_wcc',
+     'date_support_wcc','date_bsp_wcc','date_overnight_wcc',
+     'date_rp_mgmt'],
+  ];
+
+  // Signature sync groups — canvas IDs
+  var SIG_SYNC_GROUPS = [
+    // Client sigs
+    ['sig-intake_client','sig-consent_client','sig-rights_client',
+     'sig-support_client','sig-bsp_client','sig-overnight_client'],
+    // WCC / Boaz sigs
+    ['sig-intake_wcc','sig-consent_wcc','sig-rights_wcc',
+     'sig-support_wcc','sig-bsp_wcc','sig-overnight_wcc'],
+  ];
+
+  // ── 2. Build reverse lookup: field name → group index ─────────────────────
+  var fieldToGroup = {};
+  TEXT_SYNC_GROUPS.forEach(function(group, gi) {
+    group.forEach(function(name) { fieldToGroup[name] = gi; });
+  });
+
+  var sigToGroup = {};
+  SIG_SYNC_GROUPS.forEach(function(group, gi) {
+    group.forEach(function(id) { sigToGroup[id] = gi; });
+  });
+
+  // ── 3. Propagate text value to all fields in same group ───────────────────
+  var _syncing = false;
+  function propagateText(sourceField) {
+    if (_syncing) return;
+    var name  = sourceField.name;
+    var value = sourceField.value;
+    var gi    = fieldToGroup[name];
+    if (gi === undefined) return;
+    _syncing = true;
+    TEXT_SYNC_GROUPS[gi].forEach(function(fname) {
+      if (fname === name) return;
+      var targets = document.querySelectorAll('[name="' + fname + '"]');
+      targets.forEach(function(t) {
+        if (t.value !== value) {
+          t.value = value;
+          // Trigger any formatters
+          if (t.getAttribute('oninput') && t.getAttribute('oninput').includes('fmtDate')) {
+            var ev = new Event('input', {bubbles:true});
+            t.dispatchEvent(ev);
+          }
+        }
+      });
+    });
+    _syncing = false;
+  }
+
+  // ── 4. Propagate signature to all canvases in same group ──────────────────
+  function propagateSig(sourceCanvasId, dataUrl) {
+    var gi = sigToGroup[sourceCanvasId];
+    if (gi === undefined) return;
+    SIG_SYNC_GROUPS[gi].forEach(function(cid) {
+      if (cid === sourceCanvasId) return;
+      var canvas = document.getElementById(cid);
+      if (!canvas) return;
+      var ctx = canvas.getContext('2d');
+      var img = new Image();
+      img.onload = function() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        // Update the hidden data field and preview image
+        var id = cid.replace('sig-', '');
+        flushSig(id);
+      };
+      img.src = dataUrl;
+    });
+  }
+
+  // ── 5. Auto-fill today's date into all empty date fields on load ──────────
+  function autoFillDates() {
+    var now = new Date();
+    var dd  = String(now.getDate()).padStart(2,'0');
+    var mm  = String(now.getMonth()+1).padStart(2,'0');
+    var yy  = now.getFullYear();
+    var today = dd + '/' + mm + '/' + yy;
+
+    // All date_*_client and date_*_wcc fields
+    var dateNames = [
+      'date_intake_client','date_consent_client','date_rights_client',
+      'date_support_client','date_bsp_client','date_overnight_client',
+      'date_intake_wcc','date_consent_wcc','date_rights_wcc',
+      'date_support_wcc','date_bsp_wcc','date_overnight_wcc','date_rp_mgmt',
+      'date_rp_worker',
+    ];
+    dateNames.forEach(function(name) {
+      document.querySelectorAll('[name="' + name + '"]').forEach(function(el) {
+        if (!el.value) el.value = today;
+      });
+    });
+  }
+
+  // ── 6. Hook into input events ─────────────────────────────────────────────
+  function attachListeners() {
+    document.addEventListener('input', function(e) {
+      var el = e.target;
+      if (!el.name) return;
+      if (fieldToGroup[el.name] !== undefined) {
+        propagateText(el);
+      }
+    });
+    document.addEventListener('change', function(e) {
+      var el = e.target;
+      if (!el.name) return;
+      if (fieldToGroup[el.name] !== undefined) {
+        propagateText(el);
+      }
+    });
+  }
+
+  // ── 7. Patch flushSig to also propagate ───────────────────────────────────
+  // We wrap flushSig so that after a sig is drawn, it auto-copies to matching canvases
+  var _origFlushSig = window.flushSig;
+  window.flushSig = function(id) {
+    if (_origFlushSig) _origFlushSig(id);
+    // After flushing, propagate to sibling sigs
+    var canvas = document.getElementById('sig-' + id);
+    if (!canvas) return;
+    var dataUrl = canvas.toDataURL();
+    // Only propagate if canvas has actual content (not blank)
+    var blank = document.createElement('canvas');
+    blank.width = canvas.width; blank.height = canvas.height;
+    if (dataUrl !== blank.toDataURL()) {
+      propagateSig('sig-' + id, dataUrl);
+    }
+  };
+
+  // ── 8. Add a "Sync signatures" banner when sigs are drawn ────────────────
+  // Show a subtle banner after first signature saying other forms are pre-filled
+  var sigBannerShown = false;
+  function showSigBanner() {
+    if (sigBannerShown) return;
+    sigBannerShown = true;
+    var banner = document.createElement('div');
+    banner.style.cssText = 'position:fixed;bottom:72px;left:50%;transform:translateX(-50%);'
+      + 'background:#1a3a2a;color:#fff;padding:10px 20px;border-radius:8px;'
+      + 'font-size:13px;font-weight:600;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.3);'
+      + 'opacity:0;transition:opacity .4s;pointer-events:none;white-space:nowrap;';
+    banner.textContent = '✅ Signature copied to all forms automatically';
+    document.body.appendChild(banner);
+    requestAnimationFrame(function() {
+      banner.style.opacity = '1';
+      setTimeout(function() {
+        banner.style.opacity = '0';
+        setTimeout(function() { banner.remove(); }, 400);
+      }, 3000);
+    });
+  }
+
+  // Patch propagateSig to show banner
+  var _origPropagate = propagateSig;
+  propagateSig = function(id, url) {
+    _origPropagate(id, url);
+    showSigBanner();
+  };
+
+  // ── 9. Also sync when name is typed in full_name → client_name ───────────
+  // Special case: intake full_name should also populate client_name fields
+  // already handled by group but let's make sure on showTab too
+  function syncOnTabShow() {
+    var fullNameEl = document.querySelector('[name="full_name"]');
+    if (fullNameEl && fullNameEl.value) propagateText(fullNameEl);
+    var ndisEl = document.querySelector('[name="ndis_number"]');
+    if (ndisEl && ndisEl.value) propagateText(ndisEl);
+  }
+
+  // Patch showTab
+  var _origShowTab = window.showTab;
+  window.showTab = function(name) {
+    if (_origShowTab) _origShowTab(name);
+    syncOnTabShow();
+  };
+
+  // ── 10. Init ──────────────────────────────────────────────────────────────
+  window.addEventListener('load', function() {
+    attachListeners();
+    autoFillDates();
+  });
+
+})();
+
+</script>
 </body>
 </html>
